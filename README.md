@@ -24,5 +24,10 @@ In order to use this app, you must do the folllowing things
 7. Once in, you will use the command npm install to install npm dependencies needed for this project to work properly
 8. Once all of the npm dependencies are installed, you will type npm start and a new browser window will open for you along with the app.
 I hope that you are able to take good advantage of this app. Thank you for willing to use the Oracles Sign Text Updater!
+## Current Project Status
+* Ages signs work mostly fine after updating them. Even taking you to the right room in LynnaLab if you want to see where the sign is.
+* Seasons signs also work, however, because of the way the signText.s file was constructed in the oracles-disasm repo for seasons, tracking the room in LynnaLab 
+during sign edit is currently broken right now and you may need to update the room to the correct location the sign is placed just to update the text on the sign. 
+Position is not affected so you should be fine.
 
 Copyright 2024 - Oracles Sign Text Updater
