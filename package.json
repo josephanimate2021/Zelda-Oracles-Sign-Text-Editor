@@ -1,0 +1,27 @@
+{
+  "name": "oracles-sign-text-updater",
+  "version": "1.0.0",
+  "description": "An app that allows a user with no assembler or yaml code knowledge to update the text on any sign in Zelda Oracle Of Ages/Seasons by modifying the data/{GAME}/signText.s and text/{GAME}/text.yaml files located withn the oracles-disasm folder.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/josephanimate2021/oracles-sign-text-updater.git"
+  },
+  "keywords": [
+    "zelda",
+    "oracle"
+  ],
+  "author": "Joseph",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/josephanimate2021/oracles-sign-text-updater/issues"
+  },
+  "homepage": "https://github.com/josephanimate2021/oracles-sign-text-updater#readme",
+  "dependencies": {
+    "express": "^4.21.1",
+    "yaml": "^2.6.0"
+  }
+}
