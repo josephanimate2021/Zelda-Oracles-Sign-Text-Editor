@@ -53,11 +53,13 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
     else { // run this process on windows and linux
         if (!functionsCallableFromBrowser.disasmFolderPathExists(req.query)) return res.json({ 
             // the oracles-disasm folder does not exist on the user's selected path of their system
-            msg: "Sorry, but you are required to have the oracles-disasm folder somewhere in your system in order to update the text in signs.",
+            msg: "Sorry, but you are required to have the oracles-disasm folder somewhere in your system in order to\
+             update the text in signs.",
             color: "red"
         });
         if (req.query.signPosition.length < 2 || req.query.roomIndex.length < 3) res.json({ // all fields are less than the required length
-            msg: "Some fields do not have their input filled to their maximum length. Please fill those fields to the maximum length in order for your changes to work correctly.",
+            msg: "Some fields do not have their input filled to their maximum length.\
+             Please fill those fields to the maximum length in order for your changes to work correctly.",
             color: 'red'
         })
         else try { // finally, we are getting close. we just need to check for existance of the text.yaml and signText.s files.
@@ -214,6 +216,74 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
         Are you sure that you selected the correct folder?",
         color: "red"
     });
+}).post('/oracles/api/signText/update/:signPosition/:roomIndex/:name', (req, res) => { // Allows the user to update the text on an existing sign without modifying files
+    // peform some checks before doing stuff
+    if (process.platform == "darwin") res.json({ // MacOS isn't supported. So just throw out an error.
+        msg: "MacOS Is Not Supported. Please try using a different opperating system",
+        color: "red"
+    });
+    else { // run this process on windows and linux
+        if (!functionsCallableFromBrowser.disasmFolderPathExists(req.query)) return res.json({ 
+            // the oracles-disasm folder does not exist on the user's selected path of their system
+            msg: "Sorry, but you are required to have the oracles-disasm folder somewhere in your system in order to \
+            update the text in signs.",
+            color: "red"
+        });
+        if (req.query.signPosition.length < 2 || req.query.roomIndex.length < 3) res.json({ // all fields are less than the required length
+            msg: "Some fields do not have their input filled to their maximum length. Please fill those fields to the maximum length\
+             in order for your changes to work correctly.",
+            color: 'red'
+        })
+        else try { // finally, we are getting close. we just need to check for existance of the text.yaml and signText.s files.
+            const filepath = getFilepathFromDisasmPath(req.query.disasmFolderPath);
+            const textPath = path.join(filepath, `./text/${req.query.game}/text.yaml`);
+            const signTextAssemblyPath = path.join(filepath, `./data/${req.query.game}/signText.s`);
+            if (fs.existsSync(textPath) && fs.existsSync(signTextAssemblyPath)) { 
+                // we have existance for both files.
+                // adds data to the text.yaml file by converting it to a json output and inputting user data to it.
+                const textJson = yaml.parse(fs.readFileSync(textPath, 'utf8'));
+                const info = textJson.groups.find(i => i.group == 46);
+                const data = info.data.find(i => i.name == req.params.name);
+                data.text = req.query.signText || "No text";
+                fs.writeFileSync(textPath, yaml.stringify(textJson));
+                // adds data to the signText.s file by inputting the user's custom sign value into it.
+                const newGroup = req.query.roomIndex.slice(0, -2);
+                const oldGroup = req.params.roomIndex.slice(0, -2);
+                let signTextAssembly = fs.readFileSync(signTextAssemblyPath, 'utf8')
+                if (newGroup == oldGroup) signTextAssembly = signTextAssembly.replace(
+                    `.db $${req.params.signPosition}, $${req.params.roomIndex.substr(1)}, <${req.params.name}`, 
+                    `.db $${req.query.signPosition}, $${req.query.roomIndex.toLowerCase().substr(1)}, <${req.params.name}`
+                ); 
+                else {
+                    signTextAssembly = signTextAssembly.replace(
+                        `.db $${req.params.signPosition}, $${req.params.roomIndex.substr(1)}, <${req.params.name}`, 
+                        ``
+                    ); 
+                    signTextAssembly = signTextAssembly.replace(`signTextGroup${newGroup}Data:`, `signTextGroup${
+                        newGroup
+                    }Data:\n\t.db $${req.query.signPosition}, $${req.query.roomIndex.toLowerCase().substr(1)}, <${req.params.name}`)
+                }
+                fs.writeFileSync(signTextAssemblyPath, signTextAssembly);
+                // the operation was successful.
+                res.json({
+                    msg: "The operation was successful. Try testing the game on LynnaLab to see the results.",
+                    color: 'green'
+                })
+            } else { // very dissapointing to see both files not existing.
+                res.json({ // the oracles-disasm folder does not exist on the user's selected path of their system
+                    msg: "Sorry, but either the signText.s or text.yaml files for " + req.query.game + " do not exist on your system. \
+                    Are you sure that you selected the correct folder?",
+                    color: "red"
+                });
+            }
+        } catch (e) { // an error occured
+            console.log(e);
+            res.json({
+                msg: e.toString(),
+                color: "red"
+            })
+        }
+    }
 }).listen(port, () => { // Listen to the server
     console.log("App is running on port " + port)
 });

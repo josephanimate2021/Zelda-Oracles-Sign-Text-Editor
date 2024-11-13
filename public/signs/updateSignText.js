@@ -10,11 +10,13 @@ $("#folderPath").append(`<input type="text" class="form-control" id="disasmFolde
 function sendRequestMessage(msg, color) {
     $("#requestMessageBlock").css("color", color).html(msg);
 }
-const json = Object.fromEntries(new URLSearchParams(window.location.search))
+const json = Object.fromEntries(new URLSearchParams(window.location.search));
+let oldJson;
 console.log(json);
 jQuery.post("/oracles/api/signText/get" + window.location.search, d => { // gets metadata from a sign
     if (d.msg) sendRequestMessage(d.msg, d.color);
     else {
+        oldJson = d;
         $("#game").val(json.game);
         $("#signPosition").val(d.signPosition);
         $("#roomIndex").val(d.roomIndex.toUpperCase());
@@ -22,4 +24,11 @@ jQuery.post("/oracles/api/signText/get" + window.location.search, d => { // gets
         $("#disasmFolderPath").val(json.disasmFolderPath);
         jQuery.unblockUI();
     }
-})
+});
+function signInfoEntered(obj) { // updates sign info from user input
+    jQuery.blockUI();
+    jQuery.post(`/oracles/api/signText/update/${oldJson.signPosition}/${oldJson.roomIndex}/${oldJson.name}?${$(obj).serialize()}`, d => {
+        sendRequestMessage(d.msg, d.color);
+        jQuery.unblockUI();
+    })
+}

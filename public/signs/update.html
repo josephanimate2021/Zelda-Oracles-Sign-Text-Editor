@@ -178,7 +178,7 @@
             <h4 class="d-flex justify-content-between align-items-center mb-3" id="requestMessageBlock"></h4>
           </div>
           <div class="col-md-7 col-lg-8">
-            <form class="needs-validation" action="javascript:;" novalidate="">
+            <form action="javascript:;" onsubmit="signInfoEntered(this)">
               <div class="row g-3">
                 <div class="col-12">
                   <select class="form-control" name="game" required="" id="game">
@@ -186,32 +186,21 @@
                     <option value="ages">Zelda Oracle Of Ages</option>
                     <option value="seasons">Zelda Oracle Of Seasons</option>
                   </select>
-                  <div class="invalid-feedback">
-                    Please select a game
-                  </div>
                 </div>
     
                 <div class="col-12">
                   <label for="signPosition" class="form-label">Sign Position (This can be found in LynnaLab)</label>
                   <input type="text" class="form-control" id="signPosition" name="signPosition" maxlength="2" required="" placeholder="YX">
-                  <div class="invalid-feedback">
-                    Please type in the current position of the placed sign
-                  </div>
                 </div>
     
                 <div class="col-12">
                   <label for="roomIndex" class="form-label">Room Number Of The Sign (This can be found in LynnaLab)</label>
-                  <div class="input-group has-validation">
-                    <input type="text" class="form-control" id="roomIndex" name="roomIndex" maxlength="3" placeholder="000" required="">
-                    <div class="invalid-feedback">
-                      Please type in the room number of the placed sign
-                    </div>
-                  </div>
+                  <input type="text" class="form-control" id="roomIndex" name="roomIndex" maxlength="3" placeholder="000" required="">
                 </div>
 
                 <div class="col-12">
                   <label for="signText" class="form-label">Your Text For The Sign</label>
-                  <textarea class="form-control" id="signText" name="signText" placeholder="Please enjoy my rom hack while it while it lasts!"></textarea>
+                  <input type="text" class="form-control" id="signText" name="signText" placeholder="Please enjoy my rom hack while it while it lasts!"/>
                 </div>
 
                 <div class="col-12">
