@@ -204,14 +204,28 @@
         jQuery.post(`/oracles/api/signText/list?game=${$(game).val()}&disasmFolderPath=${disasmFolderPath}`, d => {
           if (!d.data) {
             if (d.callFunction) responseFunctionsCallList[d.callFunction](d.functionParams);
-            else if (d.popModal) popupModal = new bootstrap.Modal(d.popModal.id, d.popModal.options), popupModal.toggle();
+            else if (d.popModal) popupModal = new bootstrap.Modal('#' + d.popModal.id, d.popModal.options), popupModal.toggle();
             jQuery.unblockUI();
           } else $("#oracles-signs").html(d.data.map(v => `<div class="feature col">
-            <h3 class="fs-2 text-body-emphasis">Sign #${v.index + 1} (${v.name})</h3>
+            <h3 class="fs-2 text-body-emphasis">
+              <a href="/signs/update.html?name=${v.name}&disasmFolderPath=${disasmFolderPath}&game=${$(game).val()}">Sign #${v.index + 1} (${v.name})</a>
+            </h3>
             <p>${v.text}</p>
-            <a href="/signs/update.html?name=${v.name}&disasmFolderPath=${disasmFolderPath}&game=${$(game).val()}">Update Sign</a>
+            <button class="btn btn-danger" onclick="deleteSign('${v.name}', '${$(game).val()}')">Delete Sign</button>
           </div>`)), jQuery.unblockUI();
         })
+      }
+      function feedbackBlock(msg) {
+        jQuery.growlUI("Notification", msg, 3000 + 1000 + 700);
+      }
+      function deleteSign(name, game) { // deletes sign text from the oracles-disasm folder
+        const userIsSure = confirm('Are you sure that you want to delete this sign text? There is no going back if you do this action.');
+        if (
+          userIsSure
+        ) jQuery.blockUI(), jQuery.post(`/oracles/api/signText/delete/${name}?disasmFolderPath=${disasmFolderPath}&game=${game}`, d => {
+          if (d.success) $('#' + name).remove();
+          feedbackBlock(d.msg);
+        });
       }
       function disasmFolderPathEntered(obj) {
         const json = Object.fromEntries(new URLSearchParams($(obj).serialize()));

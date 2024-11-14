@@ -8,10 +8,41 @@ const fs = require("fs");
 const port = 80;
 const path = require("path");
 const yaml = require("yaml");
+const exec  = require("child_process");
 // functions
 function getFilepathFromDisasmPath(p) { // gets the filepath from user input and os.
     const filepathbeg = process.platform == "win32" ? 'c:\\' : '/';
     return path.join(filepathbeg + p);
+}
+function convertAssemblyCode(signTextAssembly, query) {
+    const assemblyJson = {};
+    const stuff = signTextAssembly.substring(signTextAssembly.indexOf("Data:") - 14)
+    const split = stuff.split(":");
+    function assemblyConvert(c = 0) { // we are grinding up some gears
+        if (split[c] && split[c + 1]) {
+            const i = split[c].split("signText")[1]
+            const d = split[c + 1].split(`\n\nsignTextGroup${c + 1}Data`)[0].split(`\nsignTextGroup${c + 1}Data`)[0].split("\n\t.db ");
+            /*let d;
+            switch (query.game) {
+                case "ages": {
+                    d = split[c + 1].split(`\n\nsignTextGroup${c + 1}Data`)[0].split(`\nsignTextGroup${c + 1}Data`)[0].split("\n\t.db ");
+                    break;
+                } case "seasons": {
+                    console.log(split[c + 1].split());
+                    d = split[c + 1].split("\n\t.db ")
+                    d[d.length - 1] = "$00";
+                    d = d.join('').split("\r")
+                    break;
+                }
+            }*/
+            d.splice(0, 1);
+            assemblyJson[i] = d
+            assemblyConvert(c + 1)
+        }
+    }
+    // begin the convert
+    assemblyConvert();
+    return assemblyJson;
 }
 const functionsCallableFromBrowser = { // all functions that can be called from a client's web browser
     disasmFolderPathExists(query) { // checks to see if the oracles-disasm folder exists on the user's system and then returns a boolean
@@ -173,33 +204,8 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
     if (fs.existsSync(textPath) && fs.existsSync(signTextAssemblyPath)) { // we have existance for both files.
         const json = yaml.parse(fs.readFileSync(textPath, 'utf-8'));
         // converts assembly code into a json output
-        const assemblyJson = {}
+        const assemblyJson = convertAssemblyCode(fs.readFileSync(signTextAssemblyPath, 'utf8'), req.query);
         const info = json.groups.find(i => i.group == 46).data.find(i => i.name == req.query.name);
-        let signTextAssembly = fs.readFileSync(signTextAssemblyPath).toString();
-        signTextAssembly = signTextAssembly.substring(signTextAssembly.indexOf("Data:") - 14)
-        const split = signTextAssembly.split(":");
-        function assemblyConvert(c = 0) { // we are grinding up some gears
-            if (split[c] && split[c + 1]) {
-                const i = split[c].split("signText")[1]
-                let d;
-                switch (req.query.game) {
-                    case "ages": {
-                        d = split[c + 1].split(`\n\nsignTextGroup${c + 1}Data`)[0].split(`\nsignTextGroup${c + 1}Data`)[0].split("\n\t.db ");
-                        break;
-                    } case "seasons": {
-                        d = split[c + 1].split("\n\t.db ")
-                        d[d.length - 1] = "$00";
-                        d = d.join('').split("\r")
-                        break;
-                    }
-                }
-                d.splice(0, 1);
-                assemblyJson[i] = d
-                assemblyConvert(c + 1)
-            }
-        }
-        // begin the convert
-        assemblyConvert();
         console.log(assemblyJson);
         for (const a in assemblyJson) { // loops around the converted assemblyjson output to find the sign position and room number
             const groupNum = a.split("Group")[1].split("Data")[0];
@@ -284,6 +290,44 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
             })
         }
     }
-}).listen(port, () => { // Listen to the server
-    console.log("App is running on port " + port)
+}).post('/oracles/api/signText/delete/:name', (req, res) => { // allows the user to remove their own text from their sign if needed.
+    const filepath = getFilepathFromDisasmPath(req.query.disasmFolderPath);
+    const textPath = path.join(filepath, `./text/${req.query.game}/text.yaml`);
+    const signTextAssemblyPath = path.join(filepath, `./data/${req.query.game}/signText.s`);
+    if (fs.existsSync(textPath) && fs.existsSync(signTextAssemblyPath)) try {
+        // removes user text from the text.yaml file
+        const stuff = yaml.parse(fs.readFileSync(textPath, 'utf8'));
+        const stuff1 = stuff.groups.find(i => i.group == 46);
+        const info = stuff1.data.find(i => i.name == req.params.name);
+        const index = stuff1.data.findIndex(i => i.name == req.params.name);
+        if (index == stuff1.data.length - 1) { // The user's text is the last one on the list (Deleting sign text this way helps prevent breaking the user's rom hack)
+            stuff1.data.splice(index, 1);
+            fs.writeFileSync(textPath, yaml.stringify(stuff));
+            let signTextAssembly = fs.readFileSync(signTextAssemblyPath, 'utf8');
+            const assemblyJson = convertAssemblyCode(signTextAssembly, req.query);
+            for (const i in assemblyJson) {
+                const line = assemblyJson[i].find(d => d.endsWith(info.name));
+                if (!line) continue;
+                signTextAssembly = signTextAssembly.replace(`.db ${line}`, '');
+            }
+            fs.writeFileSync(signTextAssemblyPath, signTextAssembly);
+            res.json({
+                success: true,
+                msg: 'The Sign Text was deleted successfuly! Try checking out the results on LynnaLab.'
+            })
+        } else res.json({
+            success: false,
+            msg: "Your sign could not be deleted because it isn't the last one you selected. This failsafe kicks in to prevent this app from breaking your rom hack of Zelda Oracle of Ages/Seasons after sign text removal."
+        })
+    } catch (e) {
+        console.log(e);
+        res.json({
+            success: false,
+            msg: e.toString()
+        })
+    }
+}).listen(port, async () => { // Listen to the server
+    console.log("App is running on port " + port);
+    const port1 = port != 80 ?? `:${port}`;
+    exec.execSync(`start http://localhost${port != 80 ? `:${port}` : ''}`)
 });
