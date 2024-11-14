@@ -29,5 +29,7 @@ I hope that you are able to take good advantage of this app. Thank you for willi
 * Seasons signs also work, however, because of the way the signText.s file was constructed in the oracles-disasm repo for seasons, tracking the room in LynnaLab 
 during sign edit is currently broken right now and you may need to update the room to the correct location the sign is placed just to update the text on the sign. 
 Position is not affected so you should be fine.
+## Why Oracles Sign Text Updater?
+If you are new to LynnaLab, you may have noticed that you can add new signs to the rom hack you are working on if you wanted to. But did you know that once you add new signs, you can't add text to them using LynnaLab, even in the new release, or even update current sign text in LynnaLab as well? Well, this app aims to help solve those exact problems by providing a user-friendly UI interface that allows you to add, update and delete sign text by giving the app infomation such as sign position, room the sign is placed in, oracles-disasm folder path, and the text itself which is the main theme of the project.
 
 Copyright 2024 - Oracles Sign Text Updater
