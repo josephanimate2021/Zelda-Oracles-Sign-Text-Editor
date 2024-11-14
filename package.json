@@ -1,7 +1,7 @@
 {
   "name": "oracles-sign-text-updater",
   "version": "1.0.0",
-  "description": "An app that allows a user with no assembler or yaml code knowledge to update the text on any sign in Zelda Oracle Of Ages/Seasons by modifying the data/{GAME}/signText.s and text/{GAME}/text.yaml files located withn the oracles-disasm folder.",
+  "description": "An app that allows a user with no assembly (coding language) or yaml code knowledge to update the text on any sign in Zelda Oracle Of Ages/Seasons by modifying the data/{GAME}/signText.s and text/{GAME}/text.yaml files located withn the oracles-disasm folder.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
