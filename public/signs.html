@@ -161,6 +161,7 @@
         <ul class="nav nav-pills">
           <li class="nav-item"><a href="/" class="nav-link">Create A New Sign</a></li>
           <li class="nav-item"><a href="javascript:;" class="nav-link active" aria-current="page">All Signs</a></li>
+          <li class="nav-item"><a href="textEditor.html" class="nav-link">ZOTE Web Edition</a></li>
         </ul>
       </header>
     </div>
@@ -183,10 +184,10 @@
           </div>
         </div>
       </div>
-    </div>-
+    </div>
     <main>
       <center><h1>All Signs</h1></center>
-      <div class="container px-4 py-5" id="featured-3">
+      <div class="container px-4 py-5">
         <h2 class="pb-2 border-bottom">Game: <select onchange="loadSigns4Game(this)" id="games">
           <option value="ages">The Legend Of Zelda Oracle Of Ages</option>
           <option value="seasons">The Legend Of Zelda Oracle Of Seasons</option>
@@ -200,19 +201,20 @@
       var disasmFolderPath = '', disasmFolderPathModal, popupModal;
       // functions
       function loadSigns4Game(game) { // loads all signs for any game the user selected. By default, this will load signs for Ages.
+        $("#oracles-signs").html('')
         jQuery.blockUI();
         jQuery.post(`/oracles/api/signText/list?game=${$(game).val()}&disasmFolderPath=${disasmFolderPath}`, d => {
           if (!d.data) {
             if (d.callFunction) responseFunctionsCallList[d.callFunction](d.functionParams);
             else if (d.popModal) popupModal = new bootstrap.Modal('#' + d.popModal.id, d.popModal.options), popupModal.toggle();
             jQuery.unblockUI();
-          } else $("#oracles-signs").html(d.data.map(v => `<div class="feature col" id="${v.name}">
+          } else $("#oracles-signs").html(d.data.map(v => `<div class="col" id="${v.name}">
             <h3 class="fs-2 text-body-emphasis">
               <a href="/signs/update.html?name=${v.name}&disasmFolderPath=${disasmFolderPath}&game=${$(game).val()}">Sign #${v.index + 1} (${v.name})</a>
             </h3>
             <p>${v.text}</p>
             <button class="btn btn-danger" onclick="deleteSign('${v.name}', '${$(game).val()}')">Delete Sign</button>
-          </div>`)), jQuery.unblockUI();
+          </div>`).join('')), jQuery.unblockUI();
         })
       }
       function feedbackBlock(msg) {

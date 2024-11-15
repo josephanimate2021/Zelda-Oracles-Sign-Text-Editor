@@ -1,13 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" data-bs-theme="dark">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <script src="./index_files/color-modes.js"></script>
+
     
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
     <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
     <meta name="generator" content="Hugo 0.122.0">
-    <title>Add Sign Text To The Legend Of Zelda Oracle Of Ages/Seasons</title>
+    <title>ZOTE (Zelda Oracles Text Editor) Web Edition · Zelda Oracle Sign Text Editor</title>
 
     <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
     <script src="./index_files/jquery.blockUI.js"></script>
@@ -101,9 +103,9 @@
 
     
     <!-- Custom styles for this template -->
-    <link href="./index_files/signTextUpdater.css" rel="stylesheet">
+    <link href="./signs_files/features.css" rel="stylesheet">
   </head>
-  <body class="bg-body-tertiary">
+  <body onload="loadTexts4Game(document.getElementById('games'))">
     <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
       <symbol id="check2" viewBox="0 0 16 16">
         <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"></path>
@@ -157,97 +159,138 @@
         </a>
   
         <ul class="nav nav-pills">
-          <li class="nav-item"><a href="javascript:;" class="nav-link active" aria-current="page">Create A New Sign</a></li>
+          <li class="nav-item"><a href="/" class="nav-link">Create A New Sign</a></li>
           <li class="nav-item"><a href="signs.html" class="nav-link">All Signs</a></li>
-          <li class="nav-item"><a href="textEditor.html" class="nav-link">ZOTE Web Edition</a></li>
+          <li class="nav-item"><a href="javascript:;" class="nav-link active" aria-current="page">ZOTE Web Edition</a></li>
         </ul>
       </header>
     </div>
-    <div class="container">
-      <main>
-        <div class="py-5 text-center">
-          <img class="d-block mx-auto mb-4" src="https://th.bing.com/th/id/OIP.3hhfCsvDD1aNC8T_h6NjnAHaCd?w=472&h=157&c=7&r=0&o=5&dpr=1.8&pid=1.7" alt="">
-          <h2>Add Sign Text To The Legend Of Zelda Oracle Of Ages/Seasons</h2>
-          <p class="lead">
-            Below is the form that allows you to add new text while adding your own sign to your current rom hack of 
-            The Legend Of Zelda Oracle Of Ages/Seasons
-          </p>
-        </div>
-    
-        <div class="row g-5">
-          <div class="col-md-5 col-lg-4 order-md-last">
-            <h4 class="d-flex justify-content-between align-items-center mb-3" id="requestMessageBlock"></h4>
+    <div class="modal" id="modalDisasmPathRequired">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="fw-bold mb-0 fs-2">Oracles Disasem Folder Path</h1>
           </div>
-          <div class="col-md-7 col-lg-8">
-            <form class="needs-validation" action="javascript:;" novalidate="">
-              <div class="row g-3">
-                <div class="col-12">
-                  <select class="form-control" name="game" required="">
-                    <option value="">Select A Game</option>
-                    <option value="ages">Zelda Oracle Of Ages</option>
-                    <option value="seasons">Zelda Oracle Of Seasons</option>
-                  </select>
-                  <div class="invalid-feedback">
-                    Please select a game
-                  </div>
-                </div>
     
-                <div class="col-12">
-                  <label for="signPosition" class="form-label">Sign Position (This can be found in LynnaLab)</label>
-                  <input type="text" class="form-control" id="signPosition" name="signPosition" maxlength="2" required="" placeholder="YX">
-                  <div class="invalid-feedback">
-                    Please type in the current position of the placed sign
-                  </div>
-                </div>
-    
-                <div class="col-12">
-                  <label for="roomIndex" class="form-label">Room Number Of The Sign (This can be found in LynnaLab)</label>
-                  <div class="input-group has-validation">
-                    <input type="text" class="form-control" id="roomIndex" name="roomIndex" maxlength="3" placeholder="000" required="">
-                    <div class="invalid-feedback">
-                      Please type in the room number of the placed sign
-                    </div>
-                  </div>
-                </div>
-
-                <div class="col-12">
-                  <label for="signText" class="form-label">Your Text For The Sign</label>
-                  <input type="text" class="form-control" id="signText" name="signText" placeholder="Please enjoy my rom hack while it while it lasts!"/>
-                </div>
-
-                <div class="col-12">
-                  <label for="disasmFolderPath" class="form-label">Oracles Disasm folder path</label>
-                  <div class="input-group has-validation" id="folderPath" style="display: none;"></div>
-                </div>
+          <div class="modal-body p-5 pt-0">
+            <form action="javascript:;" onsubmit="disasmFolderPathEntered(this)">
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="disasmFolderPath" name="disasmFolderPath">
+                <label for="disasmFolderPath">Please enter in the folder path for oracles disasm.</label>
               </div>
-    
-              <hr class="my-4">
-    
-              <button class="w-100 btn btn-primary btn-lg" type="submit">Update Text</button>
+              <button class="w-100 mb-2 btn btn-lg rounded-3 btn-primary" type="submit">Submit</button>
+              <small class="text-body-secondary" id="disasmFolderPathFormMessage"></small>
             </form>
           </div>
         </div>
-      </main>
-    
-      <footer class="my-5 pt-5 text-body-secondary text-center text-small">
-        <p class="mb-1">© 2024–<script>document.write(new Date().getFullYear())</script> Oracles Sign Text Updater</p>
-        <ul class="list-inline">
-          <li class="list-inline-item"><a href="https://github.com/Stewmath/LynnaLab">LynnaLab</a></li>
-          <li class="list-inline-item"><a href="https://github.com/Stewmath/oracles-disasm">Oracles Disasm</a></li>
-          <li class="list-inline-item"><a href="https://wiki.zeldahacking.net/oracle/List_of_hacks">Zelda Oracle Hacks</a></li>
-        </ul>
-      </footer>
+      </div>
     </div>
+    <div class="modal" id="zote">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="fw-bold mb-0 fs-2">Zelda Oracles Text Editor</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+    
+          <div class="modal-body p-5 pt-0">
+            <form action="javascript:;" onsubmit="newTextEntered(this)">
+              <div id="formData" style="display: none;"></div>
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="oraclesText" name="text">
+                <label for="oraclesText">Current Text</label>
+              </div>
+              <button class="w-100 mb-2 btn btn-lg rounded-3 btn-primary" type="submit">Submit</button>
+              <small class="text-body-secondary" id="oraclesTextFormMessage"></small>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <center><h1>Game: <select onchange="loadTexts4Game(this)" id="games">
+      <option value="ages">The Legend Of Zelda Oracle Of Ages</option>
+      <option value="seasons">The Legend Of Zelda Oracle Of Seasons</option>
+    </select></h1></center>
+    <main id="allTexts"></main>
     <script src="./index_files/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <script src="./index_files/addSignText.js"></script>
     <script>
-      // inputs a starting path for OS users
-      if (navigator.userAgent.includes("Windows")) $("#folderPath").html('<span class="input-group-text">C:\\</span>')
-      else $("#folderPath").html('<span class="input-group-text">/</span>');
-      $("#folderPath").append(`<input type="text" class="form-control" id="disasmFolderPath" name="disasmFolderPath" required="">
-      <div class="invalid-feedback">
-        Please type in the path 
-      </div>`).show();
+      // varaibles
+      var disasmFolderPath = '', disasmFolderPathModal, textEditorModal, popupModal, allTexts;
+      // functions
+      function loadTexts4Game(game, callback) { // loads all texts for any game the user selected. By default, this will load texts for Ages.
+        $("#allTexts").html('');
+        jQuery.blockUI();
+        jQuery.post(`/oracles/api/texts/list?game=${$(game).val()}&disasmFolderPath=${disasmFolderPath}`, d => {
+          if (!d.data) {
+            if (d.callFunction) responseFunctionsCallList[d.callFunction](d.functionParams);
+            else if (d.popModal) popupModal = new bootstrap.Modal('#' + d.popModal.id, d.popModal.options), popupModal.toggle();
+            jQuery.unblockUI();
+          } else allTexts = d.data, $("#allTexts").html(d.data.map(e => `<div class="container px-4 py-5">
+            <h2 class="pb-2 border-bottom">Group #${e.group + 1}</h2>
+            <div class="row g-4 py-5 row-cols-1 row-cols-lg-3">${e.data.map(v => `<div class="col">
+              <h3 class="fs-2 text-body-emphasis">Text #${Array.isArray(v.index) ? v.index.join(', ') : v.index} (${Array.isArray(v.name) ? v.name.join(', ') : v.name})</h3>
+              <p>${v.text}</p>
+              <button class="btn btn-primary" onclick="textEditor({
+                name: '${v.name}', 
+                group: ${e.group},
+                game: '${$(game).val()}'
+              })">Edit Text</button>
+            </div>`).join('')}</div>
+          </div>`).join('<hr>')), typeof callback == "function" ? callback() : jQuery.unblockUI();
+        })
+      }
+      function textEditor(formData) { // loads ZOTE
+        if (formData) {
+          $("#oraclesText").val(allTexts.find(i => i.group == formData.group).data.find(i => i.name == formData.name).text);
+          $("#formData").html(
+            Object.keys(formData).map(
+              v => `<input type="hidden" name="${v}" value="${Array.isArray(formData[v]) ? formData[v].join('.') : formData[v]}"/>`
+            ).join('')
+          )
+        }
+        textEditorModal = new bootstrap.Modal('#zote');
+        textEditorModal.show();
+      }
+      function newTextEntered(obj) {
+        textEditorModal.hide();
+        textEditorModal = '';
+        jQuery.blockUI();
+        jQuery.post(`/oracles/api/texts/update?${$(obj).serialize()}&disasmFolderPath=${disasmFolderPath}`, d => {
+          loadTexts4Game(document.getElementById('games'), () => feedbackBlock(d));
+        })
+      }
+      function feedbackBlock(msg) {
+        jQuery.growlUI("Notification", msg, 3000 + 1000 + 700);
+      }
+      function disasmFolderPathEntered(obj) {
+        const json = Object.fromEntries(new URLSearchParams($(obj).serialize()));
+        const path = json.disasmFolderPath.substr(navigator.userAgent.includes("Windows") ? 3 : 1)
+        jQuery.blockUI();
+        disasmFolderPathModal.hide();
+        jQuery.post(`/oracles/api/functions/call/disasmFolderPathExists?disasmFolderPath=${path}`, s => {
+          if (s == '1') {
+            disasmFolderPathModal = '';
+            disasmFolderPath = path;
+            loadTexts4Game(document.getElementById('games'))
+          } else {
+            $("#disasmFolderPathFormMessage").text('The oracles disasm folder path you typed in was not found on your system. Please try again.');
+            disasmFolderPathModal.show();
+            jQuery.unblockUI();
+          }
+        })
+      }
+      const responseFunctionsCallList = {
+        disasmFolderPathRequired() {
+          // inputs a starting path for OS users
+          if (navigator.userAgent.includes("Windows")) $("#disasmFolderPath").val('C:\\')
+          else $("#disasmFolderPath").val('/');
+          disasmFolderPathModal = new bootstrap.Modal('#modalDisasmPathRequired', {
+            keyboard: false,
+            backdrop: "static"
+          });
+          disasmFolderPathModal.show();
+        }
+      }
     </script>
   </body>
 </html>

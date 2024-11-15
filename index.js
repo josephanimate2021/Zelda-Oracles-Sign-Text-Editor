@@ -107,6 +107,7 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
                 const name = lastWritten.name;
                 for (var i = 0; i < letters.length - 1; i++) {
                     if (data.name) break;
+                    if (!letters[i + 1]) continue;
                     const letter = letters[i];
                     if (!name.endsWith(letter)) continue;
                     data.name = name.slice(0, -1) + letters[i + 1];
@@ -197,6 +198,38 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
             } could not be found in the oracles disasm folder you provided. Please try selecting a diffrent folder.`
         })
     }
+}).post('/oracles/api/texts/list', (req, res) => { // lists all texts based off of game choice and user's oracles disasm folder location
+    if (!req.query.disasmFolderPath) res.json({
+        callFunction: "disasmFolderPathRequired"
+    }) 
+    else { // user sent their oracles disasm folder to the path
+        const filepath = getFilepathFromDisasmPath(req.query.disasmFolderPath);
+        const textPath = path.join(filepath, `./text/${req.query.game}/text.yaml`);
+        // the text.yaml file is found for listing
+        if (fs.existsSync(textPath)) {
+            const json = yaml.parse(fs.readFileSync(textPath, 'utf-8'));
+            const read = json.groups;
+            // we don't want to update sign text as that's for a different page
+            read.splice(read.findIndex(i => i.group == 46), 1);
+            res.json({
+                data: read
+            });
+        } else res.json({ // the file does not exist
+            callFunction: "disasmFolderPathSelectErrorMessage",
+            functionParams: `The text.yaml file for ${
+                req.query.game
+            } could not be found in the oracles disasm folder you provided. Please try selecting a diffrent folder.`
+        })
+    }
+}).post('/oracles/api/texts/update', (req, res) => { // lists all texts based off of game choice and user's oracles disasm folder location
+    const filepath = getFilepathFromDisasmPath(req.query.disasmFolderPath);
+    const textPath = path.join(filepath, `./text/${req.query.game}/text.yaml`);
+    const json = yaml.parse(fs.readFileSync(textPath, 'utf-8'));
+    const group = json.groups.find(i => i.group == req.query.group);
+    const info = group.data.find(i => i.name == req.query.name);
+    info.text = req.query.text || "No text"; 
+    fs.writeFileSync(textPath, yaml.stringify(json));
+    res.end(`The Text For Group #${group.group} has been updated successfuly!`);
 }).post('/oracles/api/signText/get', (req, res) => { // gets infomation about a specific sign using assembly and yaml code.
     const filepath = getFilepathFromDisasmPath(req.query.disasmFolderPath);
     const textPath = path.join(filepath, `./text/${req.query.game}/text.yaml`);
