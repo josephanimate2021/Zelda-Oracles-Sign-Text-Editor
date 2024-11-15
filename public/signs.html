@@ -206,7 +206,7 @@
             if (d.callFunction) responseFunctionsCallList[d.callFunction](d.functionParams);
             else if (d.popModal) popupModal = new bootstrap.Modal('#' + d.popModal.id, d.popModal.options), popupModal.toggle();
             jQuery.unblockUI();
-          } else $("#oracles-signs").html(d.data.map(v => `<div class="feature col">
+          } else $("#oracles-signs").html(d.data.map(v => `<div class="feature col" id="${v.name}">
             <h3 class="fs-2 text-body-emphasis">
               <a href="/signs/update.html?name=${v.name}&disasmFolderPath=${disasmFolderPath}&game=${$(game).val()}">Sign #${v.index + 1} (${v.name})</a>
             </h3>
