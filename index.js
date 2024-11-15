@@ -107,7 +107,7 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
                 const name = lastWritten.name;
                 for (var i = 0; i < letters.length - 1; i++) {
                     if (data.name) break;
-                    if (!letters[i + 1]) continue;
+                    if (!letters[i + 1]) break;
                     const letter = letters[i];
                     if (!name.endsWith(letter)) continue;
                     data.name = name.slice(0, -1) + letters[i + 1];
