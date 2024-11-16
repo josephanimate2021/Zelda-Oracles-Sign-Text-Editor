@@ -9,6 +9,8 @@ const port = 80;
 const path = require("path");
 const yaml = require("yaml");
 const exec  = require("child_process");
+const shell = require("shelljs");
+const https = require("https");
 // functions
 function getFilepathFromDisasmPath(p) { // gets the filepath from user input and os.
     const filepathbeg = process.platform == "win32" ? 'c:\\' : '/';
@@ -62,6 +64,93 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
     const package = JSON.parse(fs.readFileSync('./package.json'));
     if (req.params.type && package[req.params.type]) res.send(package[req.params.type]);
     else res.json(package);
+}).post(`/oracles/api/LynnaLab/newProject/branchCheckout`, (req, res) => {
+    if (!fs.existsSync(req.query.dir)) res.end(`That's strange, it dosen't seem like that your project does not exist at file path ${
+        req.query.dir
+    }. Try making a new project again`);
+    else {
+        exec.exec(`cd "${req.query.dir}" && git checkout "${req.query.name}"`, (error, stdout, stderr) => {
+            if (error == null) {
+                const filrpath = process.platform == "win32" ? "\\" : `/`;
+                const name = req.query.dir.substring(req.query.dir.lastIndexOf(filrpath) + 1);
+                const oraclesDisasmRename = req.query.dir.split(name).join("oracles-disasm");
+                shell.mv(req.query.dir, oraclesDisasmRename);
+                res.end(stdout);
+            }
+            else res.end(error.toString());
+        })
+    }
+}).post('/oracles/api/LynnaLab/newProject/startClone', async (req, res) => {
+    const filepath = getFilepathFromDisasmPath(req.query.cloneDirectory);
+    if (!fs.existsSync(path.join(filepath, "./oracles-disasm"))) try {
+        const jaon = await new Promise((res, rej) => {
+            if (req.query.cloneURL.startsWith("https://github.com")) {
+                let repoFullname = req.query.cloneURL.split("github.com/")[1];
+                if (repoFullname.endsWith(".git")) repoFullname = repoFullname.slice(0, -4);
+                https.get({
+                    hostname: "api.github.com",
+                    path: `/repos/${repoFullname}/branches`,
+                    headers: {
+                        "User-Agent": "LynnaLab",
+                    }
+                }, r => {
+                    const buffers = [];
+                    r.on("data", d => buffers.push(d)).on("end", () => {
+                        try {
+                            res({
+                                data: JSON.parse(Buffer.concat(buffers)).filter(i => !i.protected),
+                                projectNewfolder: path.join(filepath, `./${repoFullname.split("/")[1]}`)
+                            })
+                        } catch (e) {
+                            e.errorMessage = Buffer.concat(buffers).toString();
+                            rej(e);
+                        }
+                    })
+                }).on("error", e => {
+                    e.errorMessage = e.toString();
+                    rej(e);
+                })
+            }
+        });
+        const filrpath = process.platform == "win32" ? "\\" : `/`;
+        const split = filepath.split(filrpath);
+        var dirChecked = false;
+        function c(d = 1) {
+            if (d == split.length) return dirChecked = true;
+            const pathbuild = [];
+            for (var i = 0; i < d; i++) pathbuild.push(split[i]);
+            if (fs.existsSync(pathbuild.join(filrpath))) c(d + 1);
+            else {
+                shell.mkdir(pathbuild.join(filrpath));
+                c(1);
+            }
+        }
+        c();
+        while (!dirChecked);
+        const endFile = process.platform == "win32" ? `bat` : `sh`;
+        const command = process.platform == "win32" ? `%@Try%\n\tcd "${filepath}"\n\tgit clone ${
+            req.query.cloneURL
+        }\n\texit\n%@EndTry%\n:@Catch\n\texit\n:@EndCatch` : `cd "${filepath}"\ngit clone ${req.query.cloneURL}\nsleep 1`
+        fs.writeFileSync(`gitClone.${endFile}`, command);
+        exec.execSync(`${process.platform == "win32" ? 'start ' : ''}gitClone.${endFile}`);
+        fs.unlinkSync(`gitClone.${endFile}`)
+        res.json(jaon);
+    } catch (e) {
+        console.log(e);
+        res.json(e);
+    } else res.json({
+        errorMessage: `Your oracles disasm project for LynnaLab already exists in path \n${
+            filepath
+        }.\nPlease use the move project to another directory feature under LynnaLab options and try again.`
+    })
+}).post('/oracles/api/LynnaLab/moveProject', (req, res) => {
+    const oldPath = getFilepathFromDisasmPath(req.query.disasmFolderPath);
+    const newPath = getFilepathFromDisasmPath(req.query.moveToDir);
+    const moveCmd = process.platform == "win32" ? `move` : `mv`;
+    exec.exec(`${moveCmd} ${oldPath} ${newPath}`, (error, stdout, stderr) => {
+        if (error == null) res.end(`Successfuly moved your LynnaLab project directory to ${newPath}.`);
+        else res.end(error.toString());
+    });
 }).post('/oracles/api/functions/call/:functionName', (req, res) => { // calls a function using a client's browser
     const value = functionsCallableFromBrowser[req.params.functionName](req.query);
     res.end(typeof value == "boolean" ? value ? '1' : '0' : typeof value == "number" ? value.toString() : value)
