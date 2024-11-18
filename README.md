@@ -1,4 +1,4 @@
-# Zelda Oracles Sign Text Editor
+# Zelda Oracles Sign Text Editor (ZOSTE)
 An app that allows a user with no assembly (coding language) or yaml code knowledge to edit the text on any sign in Zelda Oracle Of Ages/Seasons by modifying the 
 data/{GAME}/signText.s and text/{GAME}/text.yaml files located withn the oracles-disasm folder.
 ## How It Works
