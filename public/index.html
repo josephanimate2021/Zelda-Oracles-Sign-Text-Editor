@@ -154,7 +154,7 @@
         <div class="modal-content rounded-3 shadow">
           <div class="modal-body p-4 text-center">
             <h5 class="mb-0">Are you sure that you want to start a new project in LynnaLab?</h5>
-            <p class="mb-0">It is recommended that you move your current project to a new folder first before starting a new one.</p>
+            <p class="mb-0">It is recommended that you move or copy your current project to a new folder first before starting a new one.</p>
           </div>
           <div class="modal-footer flex-nowrap p-0">
             <button type="button" class="btn btn-lg btn-link fs-6 text-decoration-none col-6 py-3 m-0 rounded-0 border-end" onclick="startNewLynnaLabProject()" data-bs-dismiss="modal"><strong>Yes</strong></button>
@@ -163,41 +163,88 @@
         </div>
       </div>
     </div>
-    <div class="modal" id="modalProjectDirectoryMove">
+    <div class="modal" id="modalProjectDirectoryMoveOrCopy">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h1 class="fw-bold mb-0 fs-2">Move LynnaLab Project To Another Directory</h1>
+            <h1 class="fw-bold mb-0 fs-2">Move Or Copy Your LynnaLab Project To Another Directory</h1>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-    
           <div class="modal-body p-5 pt-0">
-            <form action="javascript:;" onsubmit="projectMoveLocationEntered(this)">
+            <form action="javascript:;" onsubmit="projectMoveOrCopyLocationEntered(this)">
               <div class="form-floating mb-3">
                 <input type="text" class="form-control" id="oldPath">
                 <label for="oldPath">Oracles Disasm Folder</label>
               </div>
               <div class="form-floating mb-3">
                 <input type="text" class="form-control" id="newPath">
-                <label for="newPath">Move Project To</label>
+                <label for="newPath"><span class="projectMoveOrCopy"></span> Project To</label>
               </div>
-              <button class="w-100 mb-2 btn btn-lg rounded-3 btn-primary" type="submit">Move Project</button>
-              <small class="text-body-secondary" id="projectPathMoveMsg"></small>
+              <div class="form-floating mb-3">
+                <select class="form-control" onchange="projectMoveOrCopyActionChanged(this)" id="projectMoveOrCopy">
+                  <option value="mv">Move Project</option>
+                  <option value="cp">Copy Project</option>
+                </select>
+                <label for="projectMoveOrCopy">How do you want to retreive your project in another directory?</label>
+              </div>
+              <button class="w-100 mb-2 btn btn-lg rounded-3 btn-primary" type="submit"><span class="projectMoveOrCopy"></span> Project</button>
+              <small class="text-body-secondary" id="projectPathMoveOrCopyMsg"></small>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal" id="modalProjectDirectoryDelete">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="fw-bold mb-0 fs-2">Delete LynnaLab Project</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+    
+          <div class="modal-body">
+            <div class="alert alert-danger" role="alert">
+              Please note that after you delete your LynnaLab project, it won't be possible to recover it again. Please be certain.
+            </div>
+            <form action="javascript:;" onsubmit="projectLocationEntered4Delete(this)">
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="disasmFolderPath1">
+                <label for="disasmFolderPath1">Oracles Disasm Folder</label>
+              </div>
+              <button class="w-100 mb-2 btn btn-lg btn-danger rounded-3 btn-primary" type="submit">Delete Project</button>
+              <small class="text-body-secondary" id="projectPathDeleteMsg"></small>
             </form>
           </div>
         </div>
       </div>
     </div>
     <div class="modal" id="newProjectFromTemplate">
-      <div class="modal-dialog">
+      <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
-            <h1 class="fw-bold mb-0 fs-2">New LynnaLab Project From Template</h1>
+            <h1 class="fw-bold mb-0 fs-2">New LynnaLab Project From a Template</h1>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
     
           <div class="modal-body p-5 pt-0">
             <form action="javascript:;" onsubmit="startNewLynnaLabProject($(this).find('#projectURL').val())">
+              <div class="alert alert-info" role="alert">
+                <h5>How To Avoid Selecting a Branch After Your New Project Has Been Created</h5>
+                <ul>
+                  <li>
+                    <h6>For github.com URLS:</h6>
+                    <ul>
+                      <li>
+                        if you put in /tree/{branch_name} after the repo URL, 
+                        then you won't be asked to select a branch after your new project has been cloned to your computer.
+                        The reason why this method works is because it allows you to use not only the available branches in the repo URL, 
+                        but also the repo's commit branch as well. This can be helpful for if you want to create a project using an 
+                        earlier version of the repo URL provided.
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+              </div>
               <div class="form-floating mb-3">
                 <input type="url" class="form-control" id="projectURL" required placeholder="https://github.com/Stewmath/oracles-disasm.git">
                 <label for="projectURL">Template URL</label>
@@ -246,7 +293,14 @@
           </div>
     
           <div class="modal-body">
-            <h6>TIP: Try to select a branch that typicaly makes hacking the oracle games as easy as it could get.</h6>
+            <h6>
+              Don't worry, if you don't want to select a branch, it's no big deal as the default branch is usually selected every time a 
+              .git project gets cloned over to your computer.
+            </h6>
+            <div class="alert alert-primary" role="alert">
+              TIP: Try to select a branch that does not break LynnaLab when the project is opened. For some branches though, 
+              you may need to download a version of LynnaLab that is compatible with the branch that you are using.
+            </div>
           </div>
 
           <div class="modal-footer d-flex justify-content-center">
@@ -279,10 +333,11 @@
             </button>
             <ul class="dropdown-menu">
               <li><a class="dropdown-item" href="javascript:;" onclick="newLynnaLabProjectFromTemplate(false)">New Project</a></li>
-              <li><a class="dropdown-item" href="javascript:;" data-bs-toggle="modal" data-bs-target="#modalProjectDirectoryMove">Move Current Project To Another Directory</a></li>
+              <li><a class="dropdown-item" href="javascript:;" data-bs-toggle="modal" data-bs-target="#modalProjectDirectoryMoveOrCopy">Move Or Copy Current Project To Another Directory</a></li>
+              <li><a class="dropdown-item" href="javascript:;" data-bs-toggle="modal" data-bs-target="#modalProjectDirectoryDelete">Delete Current Project</a></li>
               <li><a class="dropdown-item" href="javascript:;" onclick="newLynnaLabProjectFromTemplate()">New Project From A Template</a></li>
             </ul>
-          </div>
+          </li>
         </ul>
       </header>
     </div>
@@ -339,7 +394,7 @@
                 </div>
 
                 <div class="col-12">
-                  <label for="disasmFolderPath" class="form-label">Oracles Disasm folder path</label>
+                  <label for="folderPath" class="form-label">Oracles Disasm folder path</label>
                   <div class="input-group has-validation" id="folderPath" style="display: none;"></div>
                 </div>
               </div>
