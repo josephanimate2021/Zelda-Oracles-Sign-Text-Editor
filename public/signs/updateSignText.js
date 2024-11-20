@@ -3,7 +3,11 @@ jQuery.blockUI();
 // inputs a starting path for OS users
 if (navigator.userAgent.includes("Windows")) $("#folderPath").html('<span class="input-group-text">C:\\</span>')
 else $("#folderPath").html('<span class="input-group-text">/</span>');
-$("#folderPath").append(`<input type="text" class="form-control" id="disasmFolderPath" name="disasmFolderPath" required="">
+$("#folderPath").append(`<input type="text" class="form-control" id="disasmFolderPath" name="disasmFolderPath" required="" value="${
+    JSON.parse(localStorage.getItem("oracles_appSettings")).oraclesDisasmFolderPath.substr(
+        navigator.userAgent.includes("Windows") ? 3 : 1
+    ) || ''
+}">
 <div class="invalid-feedback">
     Please type in the path 
 </div>`).show();

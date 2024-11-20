@@ -7,9 +7,9 @@
     
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
-    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
+    <meta name="author" content="Joseph">
     <meta name="generator" content="Hugo 0.122.0">
-    <title>ZOTE (Zelda Oracles Text Editor) Web Edition · Zelda Oracle Sign Text Editor</title>
+    <title>ZOTE (Zelda Oracles Text Editor) Web Edition · Zelda Oracles Sign Text Editor</title>
 
     <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
     <script src="./index_files/jquery.blockUI.js"></script>
@@ -328,7 +328,7 @@
         <ul class="nav nav-pills">
           <li class="nav-item"><a href="/" class="nav-link">Create A New Sign</a></li>
           <li class="nav-item"><a href="signs.html" class="nav-link">All Signs</a></li>
-          <li class="nav-item"><a href="javascript:;" class="nav-link active" aria-current="page">ZOTE Web Edition</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page">ZOTE Web Edition</a></li>
           <li class="nav-item dropdown">
             <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
               LynnaLab Options
@@ -340,6 +340,9 @@
               <li><a class="dropdown-item" href="javascript:;" onclick="newLynnaLabProjectFromTemplate()">New Project From A Template</a></li>
             </ul>
           </li>
+        </ul>
+        <ul class="nav nav-pills">
+          <li class="nav-item"><a href="settings.html" class="nav-link">Settings</a></li>
         </ul>
       </header>
     </div>
@@ -385,6 +388,7 @@
         </div>
       </div>
     </div>
+    <div class="container" id="feedbackBlock"></div>
     <center><h1>Game: <select onchange="loadTexts4Game(this)" id="games">
       <option value="ages">The Legend Of Zelda Oracle Of Ages</option>
       <option value="seasons">The Legend Of Zelda Oracle Of Seasons</option>
@@ -393,7 +397,9 @@
     <script src="./index_files/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script>
       // varaibles
-      var disasmFolderPath = '', disasmFolderPathModal, textEditorModal, popupModal, allTexts;
+      var disasmFolderPath = JSON.parse(localStorage.getItem("oracles_appSettings")).oraclesDisasmFolderPath.substr(
+        navigator.userAgent.includes("Windows") ? 3 : 1
+      ) || '', disasmFolderPathModal, textEditorModal, popupModal, allTexts;
       // functions
       function loadTexts4Game(game, callback) { // loads all texts for any game the user selected. By default, this will load texts for Ages.
         $("#allTexts").html('');

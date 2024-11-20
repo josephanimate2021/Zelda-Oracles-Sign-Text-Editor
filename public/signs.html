@@ -7,9 +7,9 @@
     
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
-    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
+    <meta name="author" content="Joseph">
     <meta name="generator" content="Hugo 0.122.0">
-    <title>All Signs · Oracle Signs Updater</title>
+    <title>All Signs · Zelda Oracles Sign Text Editor</title>
 
     <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
     <script src="./index_files/jquery.blockUI.js"></script>
@@ -327,7 +327,7 @@
   
         <ul class="nav nav-pills">
           <li class="nav-item"><a href="/" class="nav-link">Create A New Sign</a></li>
-          <li class="nav-item"><a href="javascript:;" class="nav-link active" aria-current="page">All Signs</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page">All Signs</a></li>
           <li class="nav-item"><a href="textEditor.html" class="nav-link">ZOTE Web Edition</a></li>
           <li class="nav-item dropdown">
             <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -340,6 +340,9 @@
               <li><a class="dropdown-item" href="javascript:;" onclick="newLynnaLabProjectFromTemplate()">New Project From A Template</a></li>
             </ul>
           </li>
+        </ul>
+        <ul class="nav nav-pills">
+          <li class="nav-item"><a href="settings.html" class="nav-link">Settings</a></li>
         </ul>
       </header>
     </div>
@@ -363,6 +366,7 @@
         </div>
       </div>
     </div>
+    <div class="container" id="feedbackBlock"></div>
     <main>
       <center><h1>All Signs</h1></center>
       <div class="container px-4 py-5">
@@ -376,7 +380,9 @@
     <script src="./index_files/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script>
       // varaibles
-      var disasmFolderPath = '', disasmFolderPathModal, popupModal;
+      var disasmFolderPath = JSON.parse(localStorage.getItem("oracles_appSettings")).oraclesDisasmFolderPath.substr(
+        navigator.userAgent.includes("Windows") ? 3 : 1
+      ) || '', disasmFolderPathModal, popupModal;
       // functions
       function loadSigns4Game(game) { // loads all signs for any game the user selected. By default, this will load signs for Ages.
         $("#oracles-signs").html('')

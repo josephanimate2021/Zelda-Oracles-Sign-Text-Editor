@@ -5,7 +5,7 @@
     <script src="./index_files/color-modes.js"></script>
     
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
+    <meta name="author" content="Joseph">
     <meta name="generator" content="Hugo 0.122.0">
     <title>Add Sign Text To The Legend Of Zelda Oracle Of Ages/Seasons</title>
 
@@ -238,8 +238,8 @@
                         if you put in /tree/{branch_name} after the repo URL, 
                         then you won't be asked to select a branch after your new project has been cloned to your computer.
                         The reason why this method works is because it allows you to use not only the available branches in the repo URL, 
-                        but also the repo's commit branch as well. This can be helpful for if you want to create a project using an 
-                        earlier version of the repo URL provided.
+                        but also the repo's commit branch (and release tag) as well. 
+                        This can be helpful for if you want to create a project using an earlier version of the repo URL provided.
                       </li>
                     </ul>
                   </li>
@@ -322,9 +322,8 @@
           <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"/></svg>
           <span class="fs-4">Oracles Sign Updater</span>
         </a>
-  
         <ul class="nav nav-pills">
-          <li class="nav-item"><a href="javascript:;" class="nav-link active" aria-current="page">Create A New Sign</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page">Create A New Sign</a></li>
           <li class="nav-item"><a href="signs.html" class="nav-link">All Signs</a></li>
           <li class="nav-item"><a href="textEditor.html" class="nav-link">ZOTE Web Edition</a></li>
           <li class="nav-item dropdown">
@@ -339,8 +338,12 @@
             </ul>
           </li>
         </ul>
+        <ul class="nav nav-pills">
+          <li class="nav-item"><a href="settings.html" class="nav-link">Settings</a></li>
+        </ul>
       </header>
     </div>
+    <div class="container" id="feedbackBlock"></div>
     <div class="container">
       <main>
         <div class="py-5 text-center">
@@ -423,10 +426,14 @@
       // inputs a starting path for OS users
       if (navigator.userAgent.includes("Windows")) $("#folderPath").html('<span class="input-group-text">C:\\</span>')
       else $("#folderPath").html('<span class="input-group-text">/</span>');
-      $("#folderPath").append(`<input type="text" class="form-control" id="disasmFolderPath" name="disasmFolderPath" required="">
+      $("#folderPath").append(`<input type="text" class="form-control" id="disasmFolderPath" name="disasmFolderPath" required="" value="${
+          JSON.parse(localStorage.getItem("oracles_appSettings")).oraclesDisasmFolderPath.substr(
+              navigator.userAgent.includes("Windows") ? 3 : 1
+          ) || ''
+      }">
       <div class="invalid-feedback">
-        Please type in the path 
+          Please type in the path 
       </div>`).show();
-    </script>
+  </script>
   </body>
 </html>
