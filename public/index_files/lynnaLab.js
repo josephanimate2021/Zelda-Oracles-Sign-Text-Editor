@@ -13,7 +13,6 @@ $("#projectBranchSelection").on("hidden.bs.modal", () => {
     $("#projectBranchSelection").find('form[action="javascript:;"]').off("submit");
 })
 function startNewLynnaLabProject(cloneURL = "https://github.com/Stewmath/oracles-disasm.git") {
-    const settings = JSON.parse(localStorage.getItem("oracles_appSettings"));
     // begin project creation after user input is finished
     if ($("#modalNewProjectChoice").hasClass("isTemplateProject")) { 
         // if user chose a template, show a modal for the user to input the template URL
@@ -24,41 +23,59 @@ function startNewLynnaLabProject(cloneURL = "https://github.com/Stewmath/oracles
         if (navigator.userAgent.includes("Windows")) $("#newProjectLocationPath").val('C:\\');
         else $("#newProjectLocationPath").val('/');
         const projectConfirmModal = $("#projectLocationConfirmation");
-        if (!settings.oraclesDisasmFolderPath) projectConfirmModal.modal('show');
-        else gitClone();
+        projectConfirmModal.modal('show');
         const submitToogle = projectConfirmModal.find('form[action="javascript:;"]');
         submitToogle.off("submit");
         submitToogle.on("submit", gitClone);
         function gitClone() { // begin the project clone using Git
             const num = navigator.userAgent.includes("Windows") ? 3 : 1;
-            const val = (settings.oraclesDisasmFolderPath || $("#newProjectLocationPath").val()).substr(num);
-            if (!val) return Messages.projectLocationConfirmationMsg("Please type in a location path for your new project.");
+            const val = $("#newProjectLocationPath").val().substr(num);
+            if (!val) return Messages.projectLocationConfirmationMsg(
+                "Please type in a location path for your new project."
+            );
             projectConfirmModal.modal('hide');
             jQuery.blockUI();
             jQuery.post(`/oracles/api/LynnaLab/newProject/startClone?cloneURL=${cloneURL}&cloneDirectory=${
                 val
-            }`, d => { // after the project clone is finished, send feedback in case something went wrong. otherwise, things continue.
+            }`, d => { 
+                /*
+                after the project clone is finished, send feedback in case something went wrong. 
+                otherwise, things continue.
+                */
                 if (d.errorMessage || d.data?.message) Messages.feedbackBlock({
                     messageType: d.messageType || "info",
-                    text: `${d.data?.status ? `${d.data.status}: ` : ''}${d.data?.message || d.errorMessage}${
-                        d.data?.documentation_url ? `<center><small>Refer <a href="${
-                            d.data.documentation_url
-                        }" target="_blank">here</a> for more infomation</small></center>` : d.outputResult ? `<center><small>Output: ${
-                            d.outputResult
-                        }</small></center>` : ''
+                    text: `${d.data?.status ? `${d.data.status}: ` : ''}${
+                        d.data?.message || d.errorMessage
+                    }${
+                        d.data?.documentation_url ? `<center>
+                            <small>
+                                Refer <a href="${d.data.documentation_url}" target="_blank">here</a> 
+                                for more infomation
+                            </small>
+                        </center>` : d.outputResult ? `<center>
+                            <small>
+                                Output: ${d.outputResult}
+                            </small>
+                        </center>` : ''
                     }`
                 });
                 else { 
                     /* asks a user what branch they want to use their project 
                     using the data that the server generated based off of the URL used. */
-                    function branchCheckout(branchName) { // checks out a branch name then sends feedback to the user.
-                        jQuery.post(`/oracles/api/LynnaLab/newProject/branchCheckout?name=${branchName}&dir=${
+                    function branchCheckout(branchName) { 
+                        // checks out a branch name then sends feedback to the user.
+                        jQuery.post(`/oracles/api/LynnaLab/newProject/branchCheckout?name=${
+                            branchName
+                        }&dir=${
                             d.projectNewfolder
                         }`, Messages.feedbackBlock)
                     }
-                    if (d.data.length > 1) { // pop a branch selection modal if more than one item is in the data array
+                    if (d.data.length > 1) { 
+                        // pop a branch selection modal if more than one item is in the data array
                         const modal = $("#projectBranchSelection");
-                        modal.find("#branchSelection").html(d.data.map(v => `<option value="${v.name}">${v.name}</option>`).join(''));
+                        modal.find("#branchSelection").html(d.data.map(v => `<option value="${v.name}">${
+                            v.name
+                        }</option>`).join(''));
                         modal.off("submit");
                         modal.on("submit", () => {
                             jQuery.blockUI();
@@ -81,11 +98,15 @@ class Messages { // messages
         $("#projectLocationConfirmationMsg").text(m);
     }
     static feedbackBlock(info) { // messages for the feedback block
-        const html = (i) => `<div class="alert alert-${i.messageType} alert-dismissible fade show" role="alert">
+        const html = (i) => `<div class="alert alert-${
+            i.messageType
+        } alert-dismissible fade show" role="alert">
             ${i.text}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>`;
-        $("#feedbackBlock").html(Array.isArray(info) ? info.map(html).join('') : typeof info == "object" ? html(info) : html({
+        $("#feedbackBlock").html(Array.isArray(info) ? info.map(
+            html
+        ).join('') : typeof info == "object" ? html(info) : html({
             messageType: "info",
             text: info
         }));
@@ -98,7 +119,7 @@ function projectMoveOrCopyActionChanged(obj) { // changes text based off of user
     $(".projectMoveOrCopy").text(name)
 }
 $("#modalProjectDirectoryMoveOrCopy").on("shown.bs.modal", function () {
-    const settings = JSON.parse(localStorage.getItem("oracles_appSettings"));
+    const settings = JSON.parse(localStorage.oracles_appSettings)
     projectMoveOrCopyActionChanged(document.getElementById('projectMoveOrCopy'))
     // inputs a starting path for OS users
     if (!settings.oraclesDisasmFolderPath) {
@@ -116,18 +137,23 @@ $("#modalProjectDirectoryMoveOrCopy").on("shown.bs.modal", function () {
 });
 $("#modalProjectDirectoryDelete").on("shown.bs.modal", function () { 
     // fills in a filepath starter to help the user understand and find their path easier.
-    const settings = JSON.parse(localStorage.getItem("oracles_appSettings"));
-    $("#disasmFolderPath1").val(settings.oraclesDisasmFolderPath || navigator.userAgent.includes("Windows") ? 'C:\\' : '/');
+    const settings = JSON.parse(localStorage.oracles_appSettings);
+    $("#disasmFolderPath1").val(
+        settings.oraclesDisasmFolderPath ? settings.oraclesDisasmFolderPath : navigator.userAgent.includes("Windows") ? 'C:\\' : '/'
+    );
 });
 function projectLocationEntered4Delete(obj) { // confirms that the user does want to delete their project
     const val = $(obj).find("#disasmFolderPath1").val();
     const num = navigator.userAgent.includes("Windows") ? 3 : 1;
-    if (!val.substr(num)) return Messages.projectPathDeleteMsg("Please enter in the folder path of your current LynnaLab project");
+    if (!val.substr(num)) return Messages.projectPathDeleteMsg(
+        "Please enter in the folder path of your current LynnaLab project"
+    );
     $("#modalProjectDirectoryDelete").modal('hide');
     jQuery.blockUI();
     jQuery.post(`/oracles/api/LynnaLab/deleteProject?dir=${val.substr(num)}`, Messages.feedbackBlock);
 }
-function projectMoveOrCopyLocationEntered(obj) { // confirms that the user does want to move or copy their project
+function projectMoveOrCopyLocationEntered(obj) { 
+    // confirms that the user does want to move or copy their project
     const num = navigator.userAgent.includes("Windows") ? 3 : 1;
     const jqueryObject = $(obj);
     if (!jqueryObject.find("#oldPath").val().substr(num)) return Messages.projectPathMoveOrCopyMsg(
@@ -138,7 +164,9 @@ function projectMoveOrCopyLocationEntered(obj) { // confirms that the user does 
     );
     $("#modalProjectDirectoryMoveOrCopy").modal('hide')
     jQuery.blockUI();
-    jQuery.post(`/oracles/api/LynnaLab/projectAction/moveOrCopy/command/${jqueryObject.find("#projectMoveOrCopy").val()}?oldPath=${
+    jQuery.post(`/oracles/api/LynnaLab/projectAction/moveOrCopy/command/${jqueryObject.find(
+        "#projectMoveOrCopy"
+    ).val()}?oldPath=${
         jqueryObject.find("#oldPath").val().substr(num)
     }&newPath=${jqueryObject.find("#newPath").val().substr(num)}`, Messages.feedbackBlock);
 }

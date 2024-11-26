@@ -265,10 +265,18 @@
           </div>
     
           <div class="modal-body">
-            <h6>TIP: You usually want your project to be located somewhere where LynnaLab can access it without spitting out errors</h6>
-          </div>
-
-          <div class="modal-footer d-flex justify-content-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
+              <symbol id="info-fill" viewBox="0 0 16 16">
+                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+              </symbol>
+            </svg>
+            
+            <div class="alert alert-info d-flex align-items-center" role="alert">
+              <div>
+                <strong>TIP:</strong> 
+                You usually want your project to be located somewhere where LynnaLab can access it without spitting out errors
+              </div>
+            </div>
             <form action="javascript:;">
               <div class="form-floating mb-3">
                 <input type="text" class="form-control" id="newProjectLocationPath" required>
@@ -383,7 +391,7 @@
 
                 <div class="col-12">
                   <label for="signText" class="form-label">Your Text For The Sign</label>
-                  <input type="text" class="form-control" id="signText" name="signText" placeholder="Please enjoy my rom hack while it while it lasts!"/>
+                  <textarea class="form-control" id="signText" name="signText" placeholder="Please enjoy my rom hack while it while it lasts!"></textarea>
                 </div>
 
                 <div class="col-12">
@@ -394,7 +402,7 @@
     
               <hr class="my-4">
     
-              <button class="w-100 btn btn-primary btn-lg" type="submit">Update Text</button>
+              <button class="w-100 btn btn-primary btn-lg" type="submit">Update Sign Text</button>
             </form>
           </div>
         </div>

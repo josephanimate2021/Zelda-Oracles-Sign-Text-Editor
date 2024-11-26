@@ -66,6 +66,15 @@ const functionsCallableFromBrowser = { // all functions that can be called from 
         return fs.existsSync(filepath);
     }
 }
+function updateText(query) {
+    const filepath = getFilepathFromDisasmPath(query.disasmFolderPath);
+    const textPath = path.join(filepath, `./text/${query.game}/text.yaml`);
+    const json = yaml.parse(fs.readFileSync(textPath, 'utf-8'));
+    const group = json.groups.find(i => i.group == query.group);
+    const info = group.data.find(i => i.name == query.name);
+    info.text = query.text ? query.text.replace(/(\r\n|\n|\r)/gm, " ") : "No text"; 
+    fs.writeFileSync(textPath, yaml.stringify(json));
+}
 // Set up the app
 app.use((req, _, next) => { // log requests and ensure that this app is using localhost only.
     if (!req.headers.host.includes("localhost")) return res.send(
@@ -269,7 +278,7 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
                 }
                 if (data.name) {
                     data.index = index;
-                    data.text = req.query.signText || "No text";
+                    data.text = req.query.signText ? req.query.signText.replace(/[\n\r\t]/gm, " ") : "No text";
                     writeTo.data[index] = data;
                     writeTo.data = writeTo.data.filter(i => i != null);
                     fs.writeFileSync(textPath, yaml.stringify(textJson));
@@ -328,7 +337,8 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
                 callFunction: "disasmFolderPathSelectErrorMessage",
                 functionParams: `The signText.s file for ${
                     req.query.game
-                } could not be found in the oracles disasm folder you provided. Please try selecting a diffrent folder.`
+                } could not be found in the oracles disasm folder you provided either through this modal or settings. 
+                Please try selecting a diffrent folder.`
             })
             // continue executing the code if the file exists
             const signTextAssembly = fs.readFileSync(signTextAssemblyPath).toString();
@@ -346,7 +356,7 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
             callFunction: "disasmFolderPathSelectErrorMessage",
             functionParams: `The text.yaml file for ${
                 req.query.game
-            } could not be found in the oracles disasm folder you provided. Please try selecting a diffrent folder.`
+            } could not be found in the oracles disasm folder you provided either through this modal or settings. Please try selecting a diffrent folder.`
         })
     }
 }).post('/oracles/api/texts/list', (req, res) => { // lists all texts based off of game choice and user's oracles disasm folder location
@@ -369,18 +379,12 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
             callFunction: "disasmFolderPathSelectErrorMessage",
             functionParams: `The text.yaml file for ${
                 req.query.game
-            } could not be found in the oracles disasm folder you provided. Please try selecting a diffrent folder.`
+            } could not be found in the oracles disasm folder you provided either through this modal or settings. Please try selecting a diffrent folder.`
         })
     }
 }).post('/oracles/api/texts/update', (req, res) => { // updates text from user input
     try {
-        const filepath = getFilepathFromDisasmPath(req.query.disasmFolderPath);
-        const textPath = path.join(filepath, `./text/${req.query.game}/text.yaml`);
-        const json = yaml.parse(fs.readFileSync(textPath, 'utf-8'));
-        const group = json.groups.find(i => i.group == req.query.group);
-        const info = group.data.find(i => i.name == req.query.name);
-        info.text = req.query.text || "No text"; 
-        fs.writeFileSync(textPath, yaml.stringify(json));
+        updateText(req.query);
         res.json({
             messageType: "success",
             text: `The Text For Group #${group.group} has been updated successfuly!`
@@ -416,7 +420,8 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
         Are you sure that you selected the correct folder?",
         color: "red"
     });
-}).post('/oracles/api/signText/update/:signPosition/:roomIndex/:name', (req, res) => { // Allows the user to update the text on an existing sign without modifying files
+    // Allows the user to update the text on an existing sign without modifying files
+}).post('/oracles/api/signText/update/:signPosition/:roomIndex/:name', (req, res) => {
     // peform some checks before doing stuff
     if (process.platform == "darwin") res.json({ // MacOS isn't supported. So just throw out an error.
         msg: "MacOS Is Not Supported. Please try using a different opperating system",
@@ -440,11 +445,11 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
             const signTextAssemblyPath = path.join(filepath, `./data/${req.query.game}/signText.s`);
             if (fs.existsSync(textPath) && fs.existsSync(signTextAssemblyPath)) { // we have existance for both files.
                 // adds data to the text.yaml file by converting it to a json output and inputting user data to it.
-                const textJson = yaml.parse(fs.readFileSync(textPath, 'utf8'));
-                const info = textJson.groups.find(i => i.group == 46);
-                const data = info.data.find(i => i.name == req.params.name);
-                data.text = req.query.signText || "No text";
-                fs.writeFileSync(textPath, yaml.stringify(textJson));
+                updateText(Object.assign(req.query, {
+                    group: 46,
+                    name: req.params.name,
+                    text: req.query.signText
+                }));
                 // adds data to the signText.s file by inputting the user's custom sign value into it.
                 const newGroup = req.query.roomIndex.slice(0, -2);
                 const oldGroup = req.params.roomIndex.slice(0, -2);
