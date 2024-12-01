@@ -1,5 +1,6 @@
 @echo off
-
+set APP_NAME=Zelda Oracles Sign Text Editor
+title %APP_NAME%
 :: BatchGotAdmin
 :-------------------------------------
 REM  --> Check for permissions
@@ -11,6 +12,7 @@ REM  --> Check for permissions
 
 REM --> If error flag set, we do not have admin.
 if '%errorlevel%' NEQ '0' (
+    title %APP_NAME% [Requesting administrative privileges...]
     echo Requesting administrative privileges...
     goto UACPrompt
 ) else ( goto gotAdmin )
@@ -25,9 +27,12 @@ if '%errorlevel%' NEQ '0' (
     exit /B
 
 :gotAdmin
+    title %APP_NAME% [Loading App...]
     pushd "%CD%"
     CD /D "%~dp0"
-:-------------------------------------- 
+REM --> Start the app knowing that the user now has admin
+git submodule init
+git submodule update
 if not exist "node_modules" (
     npm install && npm start
 ) else ( npm start )

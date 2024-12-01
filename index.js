@@ -66,6 +66,8 @@ const functionsCallableFromBrowser = { // all functions that can be called from 
         return fs.existsSync(filepath);
     }
 }
+const statusStuff = {};
+const newPackages4LasRando = ['pyyaml', 'evfl'];
 function updateText(query) {
     const filepath = getFilepathFromDisasmPath(query.disasmFolderPath);
     const textPath = path.join(filepath, `./text/${query.game}/text.yaml`);
@@ -73,7 +75,9 @@ function updateText(query) {
     const group = json.groups.find(i => i.group == query.group);
     const info = group.data.find(i => i.name == query.name);
     info.text = query.text ? query.text.replace(/(\r\n|\n|\r)/gm, " ") : "No text"; 
+    info.text = info.text.replace(/\s+/g," ");
     fs.writeFileSync(textPath, yaml.stringify(json));
+    return group;
 }
 // Set up the app
 app.use((req, _, next) => { // log requests and ensure that this app is using localhost only.
@@ -87,6 +91,69 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
     const package = JSON.parse(fs.readFileSync('./package.json'));
     if (req.params.type && package[req.params.type]) res.send(package[req.params.type]);
     else res.json(package);
+}).post("/las/rando/api/otherSettings/get", (req, res) => {
+    const lasRando = path.join(__dirname, `./LAS-Randomizer`);
+    const pythonScript = fs.readFileSync(path.join(lasRando, `./main.py`)).toString();
+    const nonJsonArray = pythonScript.split("allSettings = ")[1].replace(/(\r\n|\n|\r)/gm, "").split("settings")[0];
+    const array = [];
+    const l = 2;
+    const parts = nonJsonArray.substr(l).slice(0, -l).split("',");
+    for (const i of parts) {
+        array.unshift(i.split(" '")[1] || i);
+    }
+    res.json(array.reverse())
+}).post('/las/rando/generate', async (req, res) => {
+    let fieldsNotFilled = '';
+    for (const i in req.query.required) {
+        if (!req.query.required[i]) fieldsNotFilled += i + `.`
+    }
+    if (fieldsNotFilled) return res.json({
+        error: 'You are missing some required fields.',
+        fillFields: fieldsNotFilled.split(".")
+    })
+    const lasRando = path.join(__dirname, `./LAS-Randomizer`);
+    fs.writeFileSync('requirements.txt', await new Promise((res, rej) => {
+        shell.exec('pip freeze', (code, stdout, stderr) => {
+            if (code == 0) res(stdout);
+            else rej(stderr);
+        });
+    }));
+    shell.exec(`py -3.8 -m pip uninstall -r requirements.txt`);
+    shell.cd(lasRando);
+    for (const cmd of newPackages4LasRando) shell.exec(`py -3.8 -m pip install ${cmd}`);
+    const settingsArray = [];
+    for (const i in req.query.other_settings) {
+        settingsArray.push(i);
+    }
+    shell.exec(`py -3.8 main.py ${
+        req.query.RomFSPath
+    } ${req.query.outputDir} ${req.query.seed || 'random'} ${req.query.logic} ${settingsArray.join(' ')}`, {}, (code, stdout, stderr) => {
+        statusStuff.generation = [];
+        const info = {
+            millSecs_needed: 7,
+            stdout,
+            stderr,
+            num: statusStuff.generation.length + 1
+        }
+        statusStuff.generation.unshift(info);
+        if (info.num == 1) res.json(info);
+    });
+}).post('/stuff/api/status/:type/:num', (req, res) => {
+    setTimeout(() => {
+        const done = !statusStuff[req.params.type][req.params.num]
+        if (done) {
+            const lasRando = path.join(__dirname, `./LAS-Randomizer`);
+            shell.cd(lasRando);
+            for (const cmd of newPackages4LasRando) shell.exec(`py -3.8 -m pip uninstall ${cmd}`);
+            shell.cd(__dirname);
+            shell.exec(`py -3.8 -m pip install -r requirements.txt`);
+            fs.unlinkSync('requirements.txt');
+        }
+        res.json({
+            done,
+            data: statusStuff[req.params.type][req.params.num]
+        })
+    }, statusStuff[req.params.type][req.params.num - 1].millSecs_needed);
 }).post(`/oracles/api/LynnaLab/newProject/branchCheckout`, (req, res) => { // checks out a github branch using the project directory
     if (!fs.existsSync(req.query.dir)) res.json({ // throw out a secondary error if the project directory does not exist
         messageType: "secondary",
@@ -278,7 +345,8 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
                 }
                 if (data.name) {
                     data.index = index;
-                    data.text = req.query.signText ? req.query.signText.replace(/[\n\r\t]/gm, " ") : "No text";
+                    data.text = req.query.signText ? req.query.signText.replace(/(\r\n|\n|\r)/gm, " ") : "No text";
+                    data.text = data.text.replace(/\s+/g," ");
                     writeTo.data[index] = data;
                     writeTo.data = writeTo.data.filter(i => i != null);
                     fs.writeFileSync(textPath, yaml.stringify(textJson));
@@ -384,7 +452,7 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
     }
 }).post('/oracles/api/texts/update', (req, res) => { // updates text from user input
     try {
-        updateText(req.query);
+        const group = updateText(req.query);
         res.json({
             messageType: "success",
             text: `The Text For Group #${group.group} has been updated successfuly!`
@@ -514,9 +582,10 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
                 success: true,
                 msg: 'The Sign Text was deleted successfuly! Try checking out the results on LynnaLab.'
             })
-        } else res.json({ // in order to not break a game, thorw out a failsafe error
+        } else res.json({ // in order to not break a game, throw out a failsafe error
             success: false,
-            msg: "Your sign could not be deleted because it isn't the last one you selected. This failsafe kicks in to prevent this app from breaking your rom hack of Zelda Oracle of Ages/Seasons after sign text removal."
+            msg: "Your sign could not be deleted because it isn't the last one that you selected.\
+            This failsafe kicks in to prevent this app from breaking your rom hack of Zelda Oracle of Ages/Seasons after sign text removal."
         })
     } catch (e) {
         console.log(e);
