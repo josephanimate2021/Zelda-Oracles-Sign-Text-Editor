@@ -14,16 +14,23 @@ function genRando(form) {
     $("#rando-main").hide();
     $("#rando-wait").show();
     jQuery.post(`/las/rando/generate?${$(form).serialize()}`, d => {
-        addLine(d.stdout);
-        function randoStats(c) {
+        addLine(d.stdout || d.stderr);
+        function randoStats(c = 1) {
             jQuery.post(`/stuff/api/status/generation/${c}`, k => {
                 if (!k.done) {
-                    addLine(k.stdout);
+                    addLine(k.data.stdout || k.data.stderr);
                     randoStats(c + 1);
+                } else {
+                    $("#rando-wait").hide();
+                    $("#rando-main").show();
+                    Messages.feedbackBlock({
+                        messageType: "success",
+                        text: "Your LAS Rando was built successfuly!"
+                    });
                 }
             })
         }
-        if (!d.error) randoStats(d.num);
+        if (!d.error) randoStats();
         else {
             $("#rando-wait").hide();
             $("#rando-main").show();
@@ -38,6 +45,5 @@ function genRando(form) {
     })
 }
 function addLine(line) {
-    var textNode = document.createTextNode(line);
-    document.getElementById("console_p").appendChild(textNode);
+    $("#console_p").append(`${line}<br>`);
 }

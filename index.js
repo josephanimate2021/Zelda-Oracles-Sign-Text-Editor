@@ -66,8 +66,26 @@ const functionsCallableFromBrowser = { // all functions that can be called from 
         return fs.existsSync(filepath);
     }
 }
-const statusStuff = {};
+const statusStuff = {
+    generation: []
+};
+let lasRandoDone = false;
 const newPackages4LasRando = ['pyyaml', 'evfl'];
+function lasRandoCommandExecute(c, res, callback) {
+    shell.exec(c, {}, (code, stdout, stderr) => {
+        statusStuffInput(code, stdout, stderr, res, callback);
+    });
+}
+function statusStuffInput(code, stdout, stderr, res, callback) {
+    const info = {
+        stdout,
+        stderr,
+        code
+    }
+    statusStuff.generation.unshift(info);
+    if (callback && typeof callback == "function") callback()
+    if (statusStuff.generation.length == 1 && res) res.json(info);
+}
 function updateText(query) {
     const filepath = getFilepathFromDisasmPath(query.disasmFolderPath);
     const textPath = path.join(filepath, `./text/${query.game}/text.yaml`);
@@ -103,6 +121,7 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
     }
     res.json(array.reverse())
 }).post('/las/rando/generate', async (req, res) => {
+    const lasRandoOutdir = req.query.required.outputDir.split("\\").join("/").split(" ").join("_");
     let fieldsNotFilled = '';
     for (const i in req.query.required) {
         if (!req.query.required[i]) fieldsNotFilled += i + `.`
@@ -112,48 +131,70 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
         fillFields: fieldsNotFilled.split(".")
     })
     const lasRando = path.join(__dirname, `./LAS-Randomizer`);
-    fs.writeFileSync('requirements.txt', await new Promise((res, rej) => {
+    fs.writeFileSync('currentUserPythonPackages.txt', await new Promise((res, rej) => {
         shell.exec('pip freeze', (code, stdout, stderr) => {
             if (code == 0) res(stdout);
             else rej(stderr);
         });
     }));
-    shell.exec(`py -3.8 -m pip uninstall -r requirements.txt`);
-    shell.cd(lasRando);
-    for (const cmd of newPackages4LasRando) shell.exec(`py -3.8 -m pip install ${cmd}`);
     const settingsArray = [];
     for (const i in req.query.other_settings) {
         settingsArray.push(i);
     }
-    shell.exec(`py -3.8 main.py ${
-        req.query.RomFSPath
-    } ${req.query.outputDir} ${req.query.seed || 'random'} ${req.query.logic} ${settingsArray.join(' ')}`, {}, (code, stdout, stderr) => {
-        statusStuff.generation = [];
-        const info = {
-            millSecs_needed: 7,
-            stdout,
-            stderr,
-            num: statusStuff.generation.length + 1
-        }
-        statusStuff.generation.unshift(info);
-        if (info.num == 1) res.json(info);
-    });
-}).post('/stuff/api/status/:type/:num', (req, res) => {
-    setTimeout(() => {
-        const done = !statusStuff[req.params.type][req.params.num]
-        if (done) {
-            const lasRando = path.join(__dirname, `./LAS-Randomizer`);
+    const randoSteps = {
+        step01() {
             shell.cd(lasRando);
-            for (const cmd of newPackages4LasRando) shell.exec(`py -3.8 -m pip uninstall ${cmd}`);
-            shell.cd(__dirname);
-            shell.exec(`py -3.8 -m pip install -r requirements.txt`);
-            fs.unlinkSync('requirements.txt');
+            function installPackages(c = 0) {
+                if (c == newPackages4LasRando.length) scriptStart();
+                else lasRandoCommandExecute(`py -3.8 -m pip install ${newPackages4LasRando[c]}`, res, () => installPackages(c + 1));
+            }
+            function scriptStart() {
+                const newPath1 = req.query.required.RomFSPath.split(" ").join("_");
+                shell.mv(req.query.required.RomFSPath, newPath1);
+                lasRandoCommandExecute(`py -3.8 main.py ${
+                    newPath1.split("\\").join("/")
+                } ${lasRandoOutdir} ${req.query.seed || 'random'} ${req.query.logic} ${
+                    settingsArray.join(' ')
+                }`, res, () => {
+                    shell.cd(__dirname);
+                    function unInstallPackages(c = 0) {
+                        if (c == newPackages4LasRando.length) scriptEnd();
+                        else lasRandoCommandExecute(`py -3.8 -m pip uninstall -y ${newPackages4LasRando[c]}`, res, () => unInstallPackages(c + 1));
+                    }
+                    function scriptEnd() {
+                        lasRandoCommandExecute(`py -3.8 -m pip install -r currentUserPythonPackages.txt`, res, () => {
+                            fs.unlinkSync('currentUserPythonPackages.txt');
+                            statusStuff.generation = [];
+                            lasRandoDone = true;
+                        });
+                    }
+                    unInstallPackages();
+                });
+            }
+            installPackages();
         }
-        res.json({
-            done,
-            data: statusStuff[req.params.type][req.params.num]
-        })
-    }, statusStuff[req.params.type][req.params.num - 1].millSecs_needed);
+    }
+    lasRandoCommandExecute(`py -3.8 -m pip uninstall -y -r currentUserPythonPackages.txt`, res, randoSteps.step01);
+}).post('/stuff/api/status/:type/:num', async (req, res) => {
+    res.json(await new Promise((res, rej) => {
+        if (lasRandoDone) {
+            lasRandoDone = false;
+            res({
+                done: true
+            })
+        } else {
+            const interval = setInterval(() => {
+                const data = statusStuff[req.params.type].reverse()[req.params.num];
+                if (data) {
+                    clearInterval(interval);
+                    res({
+                        done: false,
+                        data
+                    });
+                }
+            }, 1)
+        }
+    }))
 }).post(`/oracles/api/LynnaLab/newProject/branchCheckout`, (req, res) => { // checks out a github branch using the project directory
     if (!fs.existsSync(req.query.dir)) res.json({ // throw out a secondary error if the project directory does not exist
         messageType: "secondary",
