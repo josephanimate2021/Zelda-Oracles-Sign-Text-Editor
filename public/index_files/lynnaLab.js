@@ -111,6 +111,9 @@ class Messages { // messages
             text: info
         }));
         jQuery.unblockUI();
+        $('html, body').animate({
+            scrollTop: $("html").offset().top
+        }, 1);
     }
 }
 function projectMoveOrCopyActionChanged(obj) { // changes text based off of user input

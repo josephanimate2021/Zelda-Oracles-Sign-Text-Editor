@@ -71,10 +71,20 @@ const statusStuff = {
 };
 let lasRandoDone = false;
 const newPackages4LasRando = ['pyyaml', 'evfl'];
-function lasRandoCommandExecute(c, res, callback) {
-    shell.exec(c, {}, (code, stdout, stderr) => {
+function lasRandoCommandExecute(m, c, res, s, callback) {
+    const f = (code, stdout, stderr) => {
         statusStuffInput(code, stdout, stderr, res, callback);
-    });
+    };
+    const e = m.exec;
+    switch (s) {
+        case "exec": {
+            e(c, f);
+            break;
+        } case "shell": {
+            e(c, {}, f);
+            break;
+        }
+    }
 }
 function statusStuffInput(code, stdout, stderr, res, callback) {
     const info = {
@@ -109,9 +119,9 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
     const package = JSON.parse(fs.readFileSync('./package.json'));
     if (req.params.type && package[req.params.type]) res.send(package[req.params.type]);
     else res.json(package);
-}).post("/las/rando/api/otherSettings/get", (req, res) => {
-    const lasRando = path.join(__dirname, `./LAS-Randomizer`);
-    const pythonScript = fs.readFileSync(path.join(lasRando, `./main.py`)).toString();
+}).post("/switchZeldaGames/rando/api/otherSettings/get", (req, res) => {
+    const Rando = path.join(__dirname, `./${req.query.game.toUpperCase()}-Randomizer`);
+    const pythonScript = fs.readFileSync(path.join(Rando, `./main.py`)).toString();
     const nonJsonArray = pythonScript.split("allSettings = ")[1].replace(/(\r\n|\n|\r)/gm, "").split("settings")[0];
     const array = [];
     const l = 2;
@@ -120,8 +130,13 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
         array.unshift(i.split(" '")[1] || i);
     }
     res.json(array.reverse())
-}).post('/las/rando/generate', async (req, res) => {
-    const lasRandoOutdir = req.query.required.outputDir.split("\\").join("/").split(" ").join("_");
+}).post("/eow/rando/api/otherSettings/get", (req, res) => {
+    const Rando = path.join(__dirname, `./EOW-Randomizer`);
+    shell.cd(Rando);
+    shell.exec(`py main.py C:/Users/Joseph/Downloads/EOW_RomFS/EOW_RomFS C:/Users/Joseph/Downloads/EOW_Rando random basic`, {}, (code, stdout, stderr) => {
+    });
+}).post('/switchZeldaGames/rando/generate', async (req, res) => {
+    const RandoOutdir = req.query.required.outputDir.split("\\").join("/").split(" ").join("_");
     let fieldsNotFilled = '';
     for (const i in req.query.required) {
         if (!req.query.required[i]) fieldsNotFilled += i + `.`
@@ -130,7 +145,7 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
         error: 'You are missing some required fields.',
         fillFields: fieldsNotFilled.split(".")
     })
-    const lasRando = path.join(__dirname, `./LAS-Randomizer`);
+    const Rando = path.join(__dirname, `./${req.query.game.toUpperCase()}-Randomizer`);
     fs.writeFileSync('currentUserPythonPackages.txt', await new Promise((res, rej) => {
         shell.exec('pip freeze', (code, stdout, stderr) => {
             if (code == 0) res(stdout);
@@ -143,38 +158,43 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
     }
     const randoSteps = {
         step01() {
-            shell.cd(lasRando);
+            shell.cd(Rando);
             function installPackages(c = 0) {
                 if (c == newPackages4LasRando.length) scriptStart();
-                else lasRandoCommandExecute(`py -3.8 -m pip install ${newPackages4LasRando[c]}`, res, () => installPackages(c + 1));
+                else lasRandoCommandExecute(
+                    shell, `py -3.8 -m pip install ${newPackages4LasRando[c]}`, res, 'shell', () => installPackages(c + 1));
             }
             function scriptStart() {
                 const newPath1 = req.query.required.RomFSPath.split(" ").join("_");
-                shell.mv(req.query.required.RomFSPath, newPath1);
-                lasRandoCommandExecute(`py -3.8 main.py ${
+                if (fs.existsSync(req.query.required.RomFSPath)) shell.mv(req.query.required.RomFSPath, newPath1);
+                if (fs.existsSync(newPath1)) lasRandoCommandExecute(shell, `py -3.8 main.py ${
                     newPath1.split("\\").join("/")
-                } ${lasRandoOutdir} ${req.query.seed || 'random'} ${req.query.logic} ${
+                } ${RandoOutdir} ${req.query.seed || 'random'} ${req.query.logic} ${
                     settingsArray.join(' ')
-                }`, res, () => {
+                }`, res, 'shell', () => beginPackageUninstall);
+                else beginPackageUninstall(true, "We couldn't build the randomizer due to a non existant RomFS Path.");
+                function beginPackageUninstall(isError = false, error = '') {
                     shell.cd(__dirname);
                     function unInstallPackages(c = 0) {
                         if (c == newPackages4LasRando.length) scriptEnd();
-                        else lasRandoCommandExecute(`py -3.8 -m pip uninstall -y ${newPackages4LasRando[c]}`, res, () => unInstallPackages(c + 1));
+                        else lasRandoCommandExecute(
+                            shell, `py -3.8 -m pip uninstall -y ${newPackages4LasRando[c]}`, res, 'shell', () => unInstallPackages(c + 1)
+                        );
                     }
                     function scriptEnd() {
-                        lasRandoCommandExecute(`py -3.8 -m pip install -r currentUserPythonPackages.txt`, res, () => {
+                        lasRandoCommandExecute(shell, `py -3.8 -m pip install -r currentUserPythonPackages.txt`, res, 'shell', () => {
                             fs.unlinkSync('currentUserPythonPackages.txt');
-                            statusStuff.generation = [];
-                            lasRandoDone = true;
+                            if (isError) lasRandoCommandExecute(exec, `echo ${error} 1>&2`, res, 'exec');
+                            else lasRandoDone = true;
                         });
                     }
                     unInstallPackages();
-                });
+                }
             }
             installPackages();
         }
     }
-    lasRandoCommandExecute(`py -3.8 -m pip uninstall -y -r currentUserPythonPackages.txt`, res, randoSteps.step01);
+    lasRandoCommandExecute(shell, `py -3.8 -m pip uninstall -y -r currentUserPythonPackages.txt`, res, 'shell', randoSteps.step01);
 }).post('/stuff/api/status/:type/:num', async (req, res) => {
     res.json(await new Promise((res, rej) => {
         if (lasRandoDone) {
