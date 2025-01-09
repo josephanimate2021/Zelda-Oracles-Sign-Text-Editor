@@ -16,14 +16,14 @@ If the operation didn't go as expected, then you won't be able to see your resul
 In order to use this app, you must do the folllowing things
 1. Download The [Node.JS](https://nodejs.org) Installer
 2. Start up the installer and follow the prompts as you install Node.JS
-3. Once installed, you may use Command Prompt or Ternimal and type in node -v to check to see if the installation suceeded.
+3. Once installed, you may use Command Prompt or Ternimal and type in ```node -v``` to check to see if the installation suceeded.
    If it did, then you are ready to move on to the next step.
 4. Download this project using the Code dropdown at the top right of the screen followed by the Download ZIP Button.
 5. Once downloaded, extract the project zip like you normally would with other zip files.
 6. go into the project folder and use the Shift + Right click shortcut to open the ternimal or command prompt.
-7. Once in, you will use the command npm install to install npm dependencies needed for this project to work properly
-8. Once all of the npm dependencies are installed, you will type npm start and a new browser window will open for you along with the app.
-I hope that you are able to take good advantage of this app. Thank you for willing to use the Oracles Sign Text Updater!
+7. Once in, you will use the command ```npm install``` to install npm dependencies needed for this project to work properly
+8. Once all of the npm dependencies are installed, you will type ```npm start``` and a new browser window will open for you along with the app.
+I hope that you are able to take good advantage of this app. Thank you for willing to use the Zelda Oracles Sign Text Editor!
 ## Current Project Status
 * Ages signs work mostly fine after updating them, adding new text, and deleting the text. Even taking you to the right room in LynnaLab if you want to see where the sign is.
 * Seasons signs also work, however, because of the way the signText.s file was constructed in the oracles-disasm repo for seasons, tracking the room in LynnaLab 
