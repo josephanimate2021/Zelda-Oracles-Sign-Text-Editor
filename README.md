@@ -16,14 +16,14 @@ If the operation didn't go as expected, then you won't be able to see your resul
 In order to use this app, you must do the folllowing things
 1. Download The [Node.JS](https://nodejs.org) Installer
 2. Start up the installer and follow the prompts as you install Node.JS
-3. Once installed, you may use Command Prompt or Ternimal and type in node -v to check to see if the installation suceeded.
+3. Once installed, you may use Command Prompt or Ternimal and type in ```node -v``` to check to see if the installation suceeded.
    If it did, then you are ready to move on to the next step.
 4. Download this project using the Code dropdown at the top right of the screen followed by the Download ZIP Button.
 5. Once downloaded, extract the project zip like you normally would with other zip files.
 6. go into the project folder and use the Shift + Right click shortcut to open the ternimal or command prompt.
-7. Once in, you will use the command npm install to install npm dependencies needed for this project to work properly
-8. Once all of the npm dependencies are installed, you will type npm start and a new browser window will open for you along with the app.
-I hope that you are able to take good advantage of this app. Thank you for willing to use the Oracles Sign Text Updater!
+7. Once in, you will use the command ```npm install``` to install npm dependencies needed for this project to work properly
+8. Once all of the npm dependencies are installed, you will type ```npm start``` and a new browser window will open for you along with the app.
+I hope that you are able to take good advantage of this app. Thank you for willing to use the Zelda Oracles Sign Text Editor!
 ## Current Project Status
 * Ages signs work mostly fine after updating them, adding new text, and deleting the text. Even taking you to the right room in LynnaLab if you want to see where the sign is.
 * Seasons signs also work, however, because of the way the signText.s file was constructed in the oracles-disasm repo for seasons, tracking the room in LynnaLab 
@@ -32,4 +32,4 @@ Position is not affected so you should be fine.
 ## Why Zelda Oracles Sign Text Editor?
 If you are new to [LynnaLab](https://github.com/Stewmath/LynnaLab/), you may have noticed that you can add new signs to the rom hack you are working on if you wanted to. But did you know that once you add new signs, you can't add text to them using LynnaLab, even in the new release, or even update current sign text in LynnaLab as well, or deleting existing sign text in that matter? Well, this app aims to help solve those exact problems by providing a user-friendly UI interface (which uses the latest release of [Bootstrap](https://getbootstrap.com)) that allows you to add, update and delete sign text by giving the app infomation such as sign position, room the sign is placed in, oracles-disasm folder path, and the text itself which is the main theme of the project. [ZOLE](https://wiki.zeldahacking.net/oracle/ZOLE) can be used to achieve those similar things, however, due to it being deprecated (and tricky to use if you don't know what you're doing), you shouldn't use it as a main sign text editor app unless you've been experienced with the app and know what you're doing.
 
-Copyright 2024 - Zelda Oracles Sign Text Editor
+Copyright 2024-2025 - Zelda Oracles Sign Text Editor
