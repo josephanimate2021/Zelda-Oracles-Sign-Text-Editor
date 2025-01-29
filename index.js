@@ -109,11 +109,11 @@ function updateText(query) {
 }
 // Set up the app
 app.use((req, _, next) => { // log requests and ensure that this app is using localhost only.
-    if (!req.headers.host.includes("localhost")) return res.send(
+    if (!req.headers.host.startsWith("localhost") && !req.headers.host.startsWith("127.0.0.1")) return res.send(
         'This app cannot be exposed to the public world. Please use this app on localhost.'
     )
     console.log(req.method, req.url);
-    console.log(req.query);
+    console.log(req.query, req.params);
     next();
 }).use(express.static('./public')).post('/appPackage/:type', (req, res) => { // gets the package.json info for the user
     const package = JSON.parse(fs.readFileSync('./package.json'));
@@ -130,11 +130,326 @@ app.use((req, _, next) => { // log requests and ensure that this app is using lo
         array.unshift(i.split(" '")[1] || i);
     }
     res.json(array.reverse())
-}).post("/eow/rando/api/otherSettings/get", (req, res) => {
-    const Rando = path.join(__dirname, `./EOW-Randomizer`);
-    shell.cd(Rando);
-    shell.exec(`py main.py C:/Users/Joseph/Downloads/EOW_RomFS/EOW_RomFS C:/Users/Joseph/Downloads/EOW_Rando random basic`, {}, (code, stdout, stderr) => {
-    });
+}).post("/archipelago/api/loadGameGenerationForm", (req, res) => { // loads all content from the Archipelago folder and converts it into HTML code.
+    res.setHeader("Content-Type", "text/html; charset=UTF-8");
+    const filepath = getFilepathFromDisasmPath(req.query.archipelagoFilepath);
+    const htmlFileNoExist = { // some things don't exist.
+        div: [
+            {
+                attr: {
+                    class: "col-12"
+                },
+                text: {
+                    label: [
+                        {
+                            attr: {
+                                for: "archipelagoFilepath",
+                                class: "form-label"
+                            },
+                            text: "Archipelago folder path"
+                        }
+                    ],
+                    div: [
+                        {
+                            attr: {
+                                class: "input-group"
+                            },
+                            text: {
+                                span: [
+                                    {
+                                        attr: {
+                                            class: "input-group-text"
+                                        },
+                                        text: process.platform == "win32" ? 'C:\\' : '/'
+                                    }
+                                ],
+                                input: [
+                                    {
+                                        attr: {
+                                            type: "text",
+                                            class: "form-control",
+                                            id: "archipelagoFilepath",
+                                            name: "archipelagoFilepath"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        hr: [
+            {
+                attr: {
+                    class: "my-4"
+                }
+            }
+        ],
+        input: [
+            {
+                attr: {
+                    type: "button",
+                    class: "w-100 btn btn-primary btn-lg",
+                    value: "Load Game Generation Form",
+                    onclick: "loadGameGenerationForm(jQuery('#archipelagoFilepath').serialize())"
+                }
+            }
+        ]
+    }
+    function makeHTML(data) { // converts a JSON object into HTML
+        let html = '';
+        for (const key in data) {
+            for (const d of data[key]) {
+                html += `<${key} ${
+                    d.attr != undefined ? Object.keys(d.attr).map(v => `${v}="${d.attr[v]}"`).join("") : ''
+                }${d.text != undefined ? `>${typeof d.text == "object" ? makeHTML(d.text) : d.text}</${key}>` : '>'}`
+            }
+        }
+        return html;
+    }
+    if (!fs.existsSync(filepath)) res.end(makeHTML(htmlFileNoExist));
+    else { 
+        if (!req.query.archipelagoFilepath) { // the Archipelago folder does not exist
+            htmlFileNoExist.div[0].text.span = [
+                {
+                    attr: {
+                        class: "text text-danger"
+                    },
+                    text: `Please type in an Archipelago folder path`
+                }
+            ];
+            res.end(makeHTML(htmlFileNoExist))
+        } else if (!fs.existsSync(path.join(filepath, `./Players`))) { // The Players folder is missing from the Archipelago folder for some reason.
+            htmlFileNoExist.div[0].text.span = [
+                {
+                    attr: {
+                        class: "text text-danger"
+                    },
+                    text: `The Players Folder does not exist in the Archipelago Folder. please try typing in the path again. The previous folder path tried was ${
+                        filepath
+                    }.`
+                }
+            ];
+            res.end(makeHTML(htmlFileNoExist))
+        } else { 
+            const templatesPath = path.join(filepath, `./Players/Templates`);
+            if (!fs.existsSync(templatesPath)) { // The Templates folder is missing from the Archipelago/Players folder for some reason.
+                htmlFileNoExist.div[0].text.span = [
+                    {
+                        attr: {
+                            class: "text text-danger"
+                        },
+                        text: `The Templates Folder does not exist inside the Players folder withn the Archipelago Folder. please try typing in the path again. The previous folder path tried was ${
+                            filepath
+                        }.`
+                    }
+                ]
+                res.end(makeHTML(htmlFileNoExist))
+            } else { // everything exists? thank god.
+                const files = fs.readdirSync(templatesPath).filter(i => i.endsWith(".yaml"))
+                // names
+                const g = "gameFile", p = "playerName", d = "fileDesc";
+                // add stuff to the JSON version of HTML.
+                const file2StartWith = files.find(i => i == req.query.gameFile) || files[0];
+                const buffer = yaml.parse(fs.readFileSync(path.join(templatesPath, `./${file2StartWith}`), 'utf8'));
+                const gameInfo = buffer[buffer.game], htmlInfo = [
+                    {
+                        script: [
+                            {
+                                text: "jQuery('.genHameBtn').show()"
+                            }
+                        ],
+                        h4: [
+                            {
+                                text: "Basic Infomation"
+                            }
+                        ],
+                        hr: [
+                            {}
+                        ],
+                        div: [
+                            {
+                                attr: {
+                                    class: "col-12"
+                                },
+                                text: {
+                                    label: [
+                                        {
+                                            attr: {
+                                                for: g,
+                                                class: "form-label"
+                                            },
+                                            text: "Game"
+                                        }
+                                    ],
+                                    select: [
+                                        {
+                                            attr: {
+                                                class: "form-control",
+                                                id: g,
+                                                name: g,
+                                                onchange: `loadGameGenerationForm(\`${g}=\${jQuery(this).val()}&archipelagoFilepath=${
+                                                    req.query.archipelagoFilepath
+                                                }\`)`,
+                                            },
+                                            text: {
+                                                option: []
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                attr: {
+                                    class: "col-12"
+                                },
+                                text: {
+                                    label: [
+                                        {
+                                            attr: { 
+                                                for: p,
+                                                class: "form-label"
+                                            },
+                                            text: "Player Name (Your name in-game, limited to 16 characters)."
+                                        }
+                                    ],
+                                    input: [
+                                        {
+                                            attr: {
+                                                type: "text",
+                                                class: "form-control",
+                                                id: p,
+                                                name: p,
+                                                value: buffer.name,
+                                                required: "",
+                                                maxlength: 16
+                                            },
+                                        }
+                                    ],
+                                    ul: [
+                                        {
+                                            text: {
+                                                li: [
+                                                    {
+                                                        text: "{player} will be replaced with the player's slot number."
+                                                    },
+                                                    {
+                                                        text: "{PLAYER} will be replaced with the player's slot number, if that slot number is greater than 1."
+                                                    },
+                                                    {
+                                                        text: "{number} will be replaced with the counter value of the name."
+                                                    },
+                                                    {
+                                                        text: "{NUMBER} will be replaced with the counter value of the name, if the counter value is greater than 1."
+                                                    },
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                }
+                            },
+                            {
+                                attr: {
+                                    class: "col-12"
+                                },
+                                text: {
+                                    label: [
+                                        {
+                                            attr: {
+                                                for: d,
+                                                class: "form-label"
+                                            },
+                                            text: "YAML File Description (Used to describe your yaml. Useful if you have multiple files)."
+                                        }
+                                    ],
+                                    textarea: [
+                                        {
+                                            attr: {
+                                                class: "form-control",
+                                                id: d,
+                                                name: d
+                                            },
+                                            text: buffer.description
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        h4: [
+                            {
+                                text: "Game Configuration"
+                            }
+                        ],
+                        hr: [
+                            {}
+                        ],
+                        div: []
+                    }
+                ];
+                for (var i = files.length - 1; i >= 0; i--) { // more things
+                    htmlInfo[0].div[0].text.select[0].text.option[i] = {
+                        attr: {
+                            value: files[i]
+                        },
+                        text: files[i].slice(0, -5)
+                    }
+                }
+                const stuff = htmlInfo[0].div[0].text.select[0].text.option.find(j => j.attr.value == req.query.gameFile);
+                if (stuff) stuff.attr.selected = true;
+                for (const setting in gameInfo) { // loads stuff depending on the user-selected game.
+                    const pieces = setting.split("_");
+                    for (var i = 0; i < pieces.length; i++) pieces[i] = pieces[i].substring(0, 1).toLocaleUpperCase() + pieces[i].substring(1);
+                    const info = {
+                        attr: {
+                            class: "col-12"
+                        },
+                        text: {
+                            label: [
+                                {
+                                    attr: {
+                                        for: setting,
+                                        class: "form-label"
+                                    },
+                                    text: pieces.join(" ")
+                                }
+                            ],
+                            select: [
+                                {
+                                    attr: {
+                                        id: setting,
+                                        class: "form-control",
+                                        name: `generatorSettings[${setting}]`
+                                    },
+                                    text: {
+                                        option: []
+                                    }
+                                }
+                            ]
+                        }
+                    };
+                    const info2 = gameInfo[setting];
+                    for (const i in info2) {
+                        const info3 = {
+                            attr: {
+                                value: i
+                            },
+                            text: i
+                        };
+                        if (info2[i] == "50") info3.attr.selected = true;
+                        info.text.select[0].text.option.unshift(info3);
+                    }
+                    htmlInfo[1].div.unshift(info);
+                }// end it all
+                fs.writeFileSync("jyvee.json", JSON.stringify(buffer, null, "\t"));
+                res.end(htmlInfo.map(makeHTML).join(''))
+            }
+        }
+    }
+}).post('/archipelago/api/gameGeneration', (req, res) => {
+    
 }).post('/switchZeldaGames/rando/generate', async (req, res) => {
     const RandoOutdir = req.query.required.outputDir.split("\\").join("/").split(" ").join("_");
     let fieldsNotFilled = '';
